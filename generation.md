@@ -3690,7 +3690,7 @@ Of course. Here are the remaining examples from 61 to 100.
     }
     ````
 
-100. **Title**: O(n²) loop to find duplicates
+1. **Title**: O(n²) loop to find duplicates
     ````cpp
     #include <iostream>
     #include <vector>
