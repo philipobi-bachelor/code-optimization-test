@@ -1,18 +1,15 @@
-FROM gcc:15.1.0-bookworm AS gbench-build
-RUN apt update && apt install -y cmake
-RUN git clone --depth 1 --branch v1.9.4 https://github.com/google/benchmark.git /benchmark
-WORKDIR /benchmark
-RUN <<EOF
-cmake -E make_directory "build" &&\
-cmake \
-    -DBENCHMARK_ENABLE_GTEST_TESTS=OFF \
-    -DBENCHMARK_DOWNLOAD_DEPENDENCIES=on \
-    -DCMAKE_BUILD_TYPE=Release \
-    -S . -B "build" &&\
-cmake --build "build" --parallel --config Release
+FROM gcc:15.1.0-bookworm AS nanobench-build
+RUN <<EOF 
+git clone --depth 1 --branch v4.3.11 https://github.com/martinus/nanobench.git /nanobench
+mkdir /build
+mv /nanobench/src/include/nanobench.h /build
 EOF
+WORKDIR /build
+COPY <<EOF nanobench.cpp
+#define ANKERL_NANOBENCH_IMPLEMENT
+#include "nanobench.h"
+EOF
+RUN g++ -O3 -c -o nanobench.o nanobench.cpp
 
 FROM gcc:15.1.0-bookworm
-RUN mkdir -p /benchmark/lib
-COPY --from=gbench-build /benchmark/include /benchmark/
-COPY --from=gbench-build /benchmark/build/src/libbenchmark.a /benchmark/lib/
+COPY --from=nanobench-build /build/nanobench.o /build/nanobench.h /usr/src/
