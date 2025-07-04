@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+from arango import ArangoClient
+import docker
+import socket
+
+client = docker.from_env()
+
+code = """\
+#include "nanobench.h"
+{includes}
+
+{additionalDefs}
+
+void benchmarkFunc() {{
+    {body}
+}}
+
+int main() {{
+    std::ofstream nullStream("/dev/null");
+    auto* oldBuf = std::cout.rdbuf(nullStream.rdbuf());
+    ankerl::nanobench::Bench benchmark;
+    benchmark.output(nullptr);
+    benchmark.run("test", []() {{benchmarkFunc();}});
+    std::cout.rdbuf(oldBuf);
+    benchmark.render(ankerl::nanobench::templates::pyperf(), std::cout);
+}}
+"""
+
+compileCommand = (
+    "g++ "
+    "-O3 --std=c++20 "
+    "nanobench.o "
+    "-x c++ - "
+    "-o a.out"
+)
+
+shellCommand = (
+    "sh -c \""
+    f"{compileCommand}; "
+    "exitCode=$?; "
+    "if [ $exitCode -eq 0 ]; then ./a.out; "
+    "else echo Compilation failed; fi"
+    "\""
+)
+
+container = client.containers.run(
+    "localhost/benchmark-examples", 
+    shellCommand,
+    working_dir="/usr/src",
+    remove=True, detach=True, stdin_open=True,
+)
+socketIO = container.attach_socket(params=dict(stdin=1, stdout=1, stderr=1, stream=1))
+sock = socketIO._sock
+sock.sendall(code.encode())
+sock.shutdown(socket.SHUT_WR)
+while chunk:=sock.recv(1024):
+    print(chunk.decode(errors="ignore"), end="")
+
+def runCode(code):
+    includes = set((
+        "#include <iostream>",
+        "#include <fstream>",
+    ))
+    
