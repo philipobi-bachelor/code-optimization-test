@@ -127,12 +127,14 @@ Description: The inefficient version causes multiple reallocations and copies as
 // inefficient version
 #include <iostream>
 #include <string>
+#include <fstream>
 
 int main() {
+    std::ofstream devnull("/dev/null");
     for (int i = 0; i < 10000; i++) {
-        std::cout << "Number: " << i << std::endl;
+        devnull << "Number: " << i << std::endl;
     }
-    std::cout << "Done" << std::endl;
+    devnull << "Done" << std::endl;
     return 0;
 }
 ```
@@ -141,12 +143,14 @@ int main() {
 // efficient version
 #include <iostream>
 #include <string>
+#include <fstream>
 
 int main() {
+    std::ofstream devnull("/dev/null");
     for (int i = 0; i < 10000; i++) {
-        std::cout << "Number: " << i << '\n';
+        devnull << "Number: " << i << '\n';
     }
-    std::cout << "Done" << '\n';
+    devnull << "Done" << '\n';
     return 0;
 }
 ```
