@@ -2306,7 +2306,7 @@ int main() {
 }
 ```
 
-Using `std::map` for small enum-based lookups is inefficient because it involves dynamic allocation and tree traversal operations. The efficient version uses a simple array with O(1) lookup, which is much faster for small enum-indexed data.
+Description: Using `std::map` for small enum-based lookups is inefficient because it involves dynamic allocation and tree traversal operations. The efficient version uses a simple array with O(1) lookup, which is much faster for small enum-indexed data.
 
 ## Example 42: Unnecessary Exception Handling in Hot Loop
 
@@ -2351,7 +2351,7 @@ int main() {
 }
 ```
 
-Exception handling machinery adds significant overhead, especially in hot loops. The inefficient version uses `at()` which throws exceptions for bounds checking, while the efficient version uses operator `[]` which avoids this overhead when bounds checking isn't needed.
+Description: Exception handling machinery adds significant overhead, especially in hot loops. The inefficient version uses `at()` which throws exceptions for bounds checking, while the efficient version uses operator `[]` which avoids this overhead when bounds checking isn't needed.
 
 ## Example 43: Using std::endl Instead of '\n'
 
@@ -2389,7 +2389,7 @@ int main() {
 }
 ```
 
-Using `std::endl` not only inserts a newline character but also flushes the output buffer, which is expensive when done repeatedly. The efficient version uses `'\n'` characters for line breaks and only flushes once at the end, improving output performance.
+Description: Using `std::endl` not only inserts a newline character but also flushes the output buffer, which is expensive when done repeatedly. The efficient version uses `'\n'` characters for line breaks and only flushes once at the end, improving output performance.
 
 ## Example 44: Cache-Unfriendly Memory Access Pattern
 
@@ -2437,7 +2437,7 @@ int main() {
 }
 ```
 
-The inefficient version uses column-major traversal on a row-major stored matrix, causing poor cache locality and frequent cache misses. The efficient version aligns the traversal pattern with the memory layout, improving cache utilization and performance.
+Description: The inefficient version uses column-major traversal on a row-major stored matrix, causing poor cache locality and frequent cache misses. The efficient version aligns the traversal pattern with the memory layout, improving cache utilization and performance.
 
 ## Example 45: Inefficient Use of std::function for Performance-Critical Callbacks
 
@@ -2495,7 +2495,7 @@ int main() {
 }
 ```
 
-`std::function` introduces type erasure overhead that can impact performance in tight loops. The efficient version uses a direct function pointer which avoids this overhead and allows better compiler optimizations.
+Description: `std::function` introduces type erasure overhead that can impact performance in tight loops. The efficient version uses a direct function pointer which avoids this overhead and allows better compiler optimizations.
 
 ## Example 46: Random Number Generation with Modulo Bias
 
@@ -2553,7 +2553,7 @@ int main() {
 }
 ```
 
-Using modulo (`%`) on random numbers causes bias when the random number range isn't divisible by the desired range. The efficient version uses `std::uniform_int_distribution` which guarantees uniform distribution without bias.
+Description: Using modulo (`%`) on random numbers causes bias when the random number range isn't divisible by the desired range. The efficient version uses `std::uniform_int_distribution` which guarantees uniform distribution without bias.
 
 ## Example 47: Linear Search Instead of Binary Search on Sorted Data
 
@@ -2605,7 +2605,7 @@ int main() {
 }
 ```
 
-The inefficient version uses linear search which is O(n) complexity, while the efficient version uses binary search which is O(log n). For sorted data, binary search provides exponentially better performance as data size increases.
+Description: The inefficient version uses linear search which is O(n) complexity, while the efficient version uses binary search which is O(log n). For sorted data, binary search provides exponentially better performance as data size increases.
 
 ## Example 48: Recompiling Regular Expressions Repeatedly
 
@@ -2669,7 +2669,7 @@ int main() {
 }
 ```
 
-Regular expression compilation is an expensive operation. The inefficient version recompiles the same regex on each loop iteration, while the efficient version compiles it once and reuses it, significantly reducing overhead.
+Description: Regular expression compilation is an expensive operation. The inefficient version recompiles the same regex on each loop iteration, while the efficient version compiles it once and reuses it, significantly reducing overhead.
 
 ## Example 49: Inefficient Use of std::any When Type is Known
 
@@ -2721,7 +2721,7 @@ int main() {
 }
 ```
 
-Using `std::any` introduces overhead from type erasure, dynamic allocation, and runtime type checking. When the actual types are known at compile time, using direct types avoids this overhead and enables better compiler optimizations.
+Description: Using `std::any` introduces overhead from type erasure, dynamic allocation, and runtime type checking. When the actual types are known at compile time, using direct types avoids this overhead and enables better compiler optimizations.
 
 ## Example 50: Inefficient Recursive Fibonacci Without Memoization
 
@@ -2769,7 +2769,7 @@ int main() {
 }
 ```
 
-The inefficient recursive version has exponential time complexity O(2^n) due to redundant recalculations. The efficient version uses dynamic programming with memoization to calculate each Fibonacci number only once, resulting in linear O(n) time complexity.
+Description: The inefficient recursive version has exponential time complexity O(2^n) due to redundant recalculations. The efficient version uses dynamic programming with memoization to calculate each Fibonacci number only once, resulting in linear O(n) time complexity.
 
 `(1 min, 14.113 s)`
 
