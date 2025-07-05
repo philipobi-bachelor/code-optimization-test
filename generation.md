@@ -3593,6 +3593,7 @@ Of course. Here are the remaining examples from 61 to 100.
     #include <vector>
     #include <algorithm>
     #include <cmath>
+    #include <numeric>
 
     bool is_perfect_square(int n) {
         if (n < 0) return false;
@@ -3614,6 +3615,7 @@ Of course. Here are the remaining examples from 61 to 100.
     #include <vector>
     #include <algorithm>
     #include <unordered_set>
+    #include <numeric>
 
     int main() {
         std::vector<int> v(1000000);
@@ -3694,6 +3696,7 @@ Of course. Here are the remaining examples from 61 to 100.
     ````cpp
     #include <iostream>
     #include <vector>
+    #include <numeric>
 
     bool has_duplicates(const std::vector<int>& v) {
         for (size_t i = 0; i < v.size(); ++i) {
