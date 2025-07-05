@@ -1069,6 +1069,7 @@ Description: The inefficient version uses `auto` without reference, creating cop
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 
 int main() {
     std::vector<int> data(10000, 1);
