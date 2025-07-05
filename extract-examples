@@ -53,11 +53,13 @@ def findMainBody(code:str) -> str:
 ````
 """   
 exampleRegex = re.compile(
-    r"\d+\.\s*\*\*Title\*\*:\s*(?P<title>[^\n]*)\s*"
-    r"````cpp\s*(?P<code>[^`]*)````\s*"
-    r"\*\*Fix\*\*:\s*(?P<description>[^\n]*)\s*"
-    r"````cpp\s*(?P<codeFixed>[^`]*)````\s*"
+    r"## Example \d+: (?P<title>[^\n]*)\s*"
+    r"```cpp\s*(?P<code>[^`]*)```\s*"
+    r"```cpp\s*(?P<codeFixed>[^`]*)```\s*"
+    r"Description: (?P<description>[^\n]*)\s*",
+    flags=re.DOTALL
 )
+
 
 commentRegex = re.compile(r"\/\/[^\n]*")
 stripComments = lambda s : re.sub(commentRegex, "", s)
@@ -66,7 +68,7 @@ includeRegex = re.compile(r"#include[^\n]*")
 
 def processCode(code):
     code = stripComments(code)
-    includes = re.findall(includeRegex, code)
+    includes = [s.strip() for s in re.findall(includeRegex, code)]
     mainInfo = findMainBody(code)
     
     mainBody = code[mainInfo["bodyStart"] : mainInfo["bodyEnd"]]
@@ -91,7 +93,7 @@ def processCode(code):
 starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
 def extractExamples():
-    with open("generation.md", "r") as f:
+    with open("generated-examples.md", "r") as f:
         buffer = f.read()
     
     def processMatch(i, match):
@@ -117,7 +119,7 @@ def insertExamples():
     exampleCollection = ArangoClient("http://localhost:8529").db().collection("code-examples")
     exampleCollection.import_bulk(
         documents = list(extractExamples()),
-        on_duplicate="replace"
+        on_duplicate="update"
     )
         
 if __name__ == "__main__":

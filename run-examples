@@ -1,64 +1,96 @@
 #!/usr/bin/env python3
 from arango import ArangoClient
-import docker
-import socket
+from benchmark import Benchmarker
+import statistics
+import json
 
-client = docker.from_env()
-
-code = """\
+benchmarkTemplate = """\
 #include "nanobench.h"
 {includes}
 
 {additionalDefs}
 
 void benchmarkFunc() {{
-    {body}
+    {benchmarkBody}
 }}
 
 int main() {{
-    std::ofstream nullStream("/dev/null");
-    auto* oldBuf = std::cout.rdbuf(nullStream.rdbuf());
     ankerl::nanobench::Bench benchmark;
     benchmark.output(nullptr);
     benchmark.run("test", []() {{benchmarkFunc();}});
-    std::cout.rdbuf(oldBuf);
-    benchmark.render(ankerl::nanobench::templates::pyperf(), std::cout);
+    benchmark.render(ankerl::nanobench::templates::pyperf(), std::cerr);
 }}
 """
 
-compileCommand = (
-    "g++ "
-    "-O3 --std=c++20 "
-    "nanobench.o "
-    "-x c++ - "
-    "-o a.out"
-)
+""" nanobench output:
+{
+    "benchmarks": [{"runs": [{"values": [float*]}]}],
+    "metadata": {
+    "loops": int,
+    "inner_loops": int,
+    "name": str,
+    "unit": "second"
+    },
+    "version": str
+}
+"""
 
-shellCommand = (
-    "sh -c \""
-    f"{compileCommand}; "
-    "exitCode=$?; "
-    "if [ $exitCode -eq 0 ]; then ./a.out; "
-    "else echo Compilation failed; fi"
-    "\""
-)
 
-container = client.containers.run(
-    "localhost/benchmark-examples", 
-    shellCommand,
-    working_dir="/usr/src",
-    remove=True, detach=True, stdin_open=True,
-)
-socketIO = container.attach_socket(params=dict(stdin=1, stdout=1, stderr=1, stream=1))
-sock = socketIO._sock
-sock.sendall(code.encode())
-sock.shutdown(socket.SHUT_WR)
-while chunk:=sock.recv(1024):
-    print(chunk.decode(errors="ignore"), end="")
-
-def runCode(code):
-    includes = set((
-        "#include <iostream>",
-        "#include <fstream>",
-    ))
+def benchmarkExample(benchmarker:Benchmarker, exampleCode):
+    requiredIncludes = set(("#include <iostream>",))
+    includes = requiredIncludes | set(exampleCode["includes"])
+    code = benchmarkTemplate.format(
+        includes = "\n".join(includes),
+        additionalDefs = exampleCode["additionalDefs"],
+        benchmarkBody = exampleCode["mainBody"]
+    )
     
+    # discard output from stdout as it may be flooded by the benchmarked function
+    output = benchmarker.runCode(code, stdout=False, stderr=True)
+    output = output["stderr"]
+
+    result = dict(compiled=False, executed=False, output=output, runtimeAvg=-1.)
+    
+    if "Compilation failed" in output: 
+        print(code)
+        return result
+    result["compiled"]=True
+    if "Execution failed" in output: return result
+    result["executed"] = True
+    try: 
+        data = json.loads(output)
+        runtimes = data["benchmarks"][0]["runs"][0]["values"]
+        result["runtimeAvg"] = statistics.mean(runtimes)
+    except json.JSONDecodeError: pass
+    
+    return result
+
+def processExample(benchmarker, example):
+    _key = example["_key"]
+    print(f"Processing example {_key}", end="\r")
+    update = { "_key": _key }
+    update["code"] = benchmarkExample(benchmarker, example["code"])
+    update["codeFixed"] = benchmarkExample(benchmarker, example["codeFixed"])
+    return update
+
+
+def main():
+    db = ArangoClient("http://localhost:8529").db()
+    exampleCollection = db.collection("code-examples")
+
+    benchmarker = Benchmarker()
+
+    cursor = db.aql.execute(
+    """
+    for example in `code-examples` 
+      sort to_number(example._key) asc
+      return example
+    """
+    )
+    
+    updates = [processExample(benchmarker, example) for example in cursor]
+    
+    exampleCollection.update_many(updates)
+
+if __name__=="__main__":
+    main()
