@@ -433,34 +433,22 @@ int main() {
 
 Description: Bubble sort has O(n²) time complexity, while `std::sort` uses introsort which typically has O(n log n) complexity. For large arrays, this makes a significant difference in performance.
 
-## Example 10: Inefficient File Reading Line by Line
+## Example 10: Reading a file character by character
 
 ```cpp
 // inefficient version
 #include <iostream>
 #include <fstream>
-#include <string>
-#include <vector>
 
 int main() {
-    std::ofstream outfile("test.txt");
-    for (int i = 0; i < 10000; i++) {
-        outfile << "Line " << i << "\n";
-    }
-    outfile.close();
-    
-    std::vector<std::string> lines;
+    std::ofstream("test.txt") << std::string(100000, 'x');
     std::ifstream file("test.txt");
-    std::string line;
-    
-    while (file.good()) {
-        std::getline(file, line);
-        if (!file.eof()) {
-            lines.push_back(line);
-        }
+    char c;
+    long count = 0;
+    while (file.get(c)) {
+        count++;
     }
-    
-    std::cout << "Lines read: " << lines.size() << std::endl;
+    std::cout << "Read " << count << " chars." << std::endl;
     return 0;
 }
 ```
@@ -469,30 +457,24 @@ int main() {
 // efficient version
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 
 int main() {
-    std::ofstream outfile("test.txt");
-    for (int i = 0; i < 10000; i++) {
-        outfile << "Line " << i << "\n";
+    std::ofstream("test.txt") << std::string(100000, 'x');
+    std::ifstream file("test.txt", std::ios::binary);
+    const size_t buffer_size = 4096;
+    std::vector<char> buffer(buffer_size);
+    long count = 0;
+    while (file.read(buffer.data(), buffer_size)) {
+        count += file.gcount();
     }
-    outfile.close();
-    
-    std::vector<std::string> lines;
-    std::ifstream file("test.txt");
-    std::string line;
-    
-    while (std::getline(file, line)) {
-        lines.push_back(line);
-    }
-    
-    std::cout << "Lines read: " << lines.size() << std::endl;
+    count += file.gcount(); // Add count from final partial read
+    std::cout << "Read " << count << " chars." << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version checks `good()` before reading, which can lead to reading one extra line, and requires an extra check for `eof()`. The efficient version uses the return value of `getline()` directly in the while condition, which is more idiomatic and correct.
+Description: Reading a file one character at a time involves many system calls and is very slow. Read the file in larger chunks into a buffer.
 
 ## Example 11: Using `std::pow` for integer powers of 2
 
@@ -1683,34 +1665,23 @@ int main() {
 
 Description: The inefficient version creates a new `istringstream` for each splitting operation, which has overhead. The efficient version uses direct string manipulation with `find()` and `substr()`, avoiding the stream overhead.
 
-## Example 36: Inefficient Use of getline() for Reading Lines
+## Example 36: Inefficient `std::priority_queue` usage
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <vector>
+#include <queue>
+#include <numeric>
 
 int main() {
-    // Create a test file
-    std::ofstream outfile("test_lines.txt");
-    for (int i = 0; i < 10000; i++) {
-        outfile << "Line " << i << "\n";
+    std::vector<int> v(100000);
+    std::iota(v.begin(), v.end(), 0);
+    std::priority_queue<int> pq;
+    for (int x : v) {
+        pq.push(x); // O(log n) for each push
     }
-    outfile.close();
-    
-    std::vector<std::string> lines;
-    std::ifstream file("test_lines.txt");
-    std::string line;
-    
-    while (true) {
-        std::getline(file, line);
-        if (file.eof()) break;
-        lines.push_back(line);
-    }
-    
-    std::cout << "Lines read: " << lines.size() << std::endl;
+    std::cout << pq.top() << std::endl;
     return 0;
 }
 ```
@@ -1718,33 +1689,21 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <vector>
+#include <queue>
+#include <numeric>
 
 int main() {
-    // Create a test file
-    std::ofstream outfile("test_lines.txt");
-    for (int i = 0; i < 10000; i++) {
-        outfile << "Line " << i << "\n";
-    }
-    outfile.close();
-    
-    std::vector<std::string> lines;
-    lines.reserve(10000);
-    std::ifstream file("test_lines.txt");
-    std::string line;
-    
-    while (std::getline(file, line)) {
-        lines.push_back(line);
-    }
-    
-    std::cout << "Lines read: " << lines.size() << std::endl;
+    std::vector<int> v(100000);
+    std::iota(v.begin(), v.end(), 0);
+    // O(n) construction from a range
+    std::priority_queue<int> pq(v.begin(), v.end());
+    std::cout << pq.top() << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses an explicit loop with `eof()` check after `getline()`, which can lead to reading one extra line. The efficient version uses the return value of `getline()` directly in the while condition and reserves memory for the vector.
+Description: Pushing elements one-by-one into a priority queue is less efficient than initializing it from a range. The range constructor can build the heap in linear time (O(n)).
 
 ## Example 37: Inefficient Value Copy in Function Return
 
@@ -2424,3 +2383,5 @@ int main() {
     return 0;
 }
 ```
+
+Description: The inefficient recursive version has exponential time complexity O(2^n) due to redundant recalculations. The efficient version uses dynamic programming with memoization to calculate each Fibonacci number only once, resulting in linear O(n) time complexity.
