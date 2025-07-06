@@ -1,54 +1,3 @@
-Document ID: `chat-logs/1410233`
-
-<blockquote>
-
-#### philipobi:
-Your task is to generate **50 distinct examples** of common C++ coding mistakes that introduce **significant inefficiencies**. For each example, output the following, in order:
-
-1. **A title** on its own line, e.g. `Example 1: Inefficient String Concatenation with std::string`
-
-2. **Inefficient version** – a complete, compilable C++17 snippet (including `#include` directives and `int main()`), using only the standard library, that demonstrates the inefficiency. Make sure it **prints** its result to `stdout` so the compiler cannot optimize it away. Wrap it in a fenced code block tagged `cpp`:
-   ```cpp
-   // inefficient version
-   #include <…>
-   int main() {
-       …
-       std::cout << result << std::endl;
-       return 0;
-   }
-   ```
-
-3. Efficient version – another complete, compilable C++17 snippet that performs exactly the same task and produces the same output, but with the inefficiency removed. Also print its result:
-    ```cpp
-    // efficient version
-    #include <…>
-    int main() {
-        …
-        std::cout << result << std::endl;
-        return 0;
-    }
-    ```
-
-4. Description: One or two sentences explaining why the first version is inefficient (e.g. “Because it performs repeated reallocations” or “Because it uses O(n²) instead of O(n)”) and how the second version fixes it.
-
-Additional requirements:
-
-- Each pair must demonstrate the same observable behavior (same output).
-- Use realistic but minimal examples.
-- Cover 50 different inefficiencies (e.g. unnecessary copies, wrong container choice, unbounded recursion, missing reserve(), expensive virtual calls in hot loops, etc.).
-- Label each section clearly and consistently.
-- Do not use any third‑party libraries.
-- All examples should compile under g++ -std=c++17.
-
-Please produce the entire set of 50 examples in one response, numbered 1 through 50.
-
-
-</blockquote>
-
-<blockquote>
-
-#### GitHub Copilot (claude-3.7-sonnet-thought):
-
 # 50 Common C++ Inefficiency Examples
 
 ## Example 1: Inefficient String Concatenation in a Loop
@@ -547,25 +496,19 @@ int main() {
 
 Description: The inefficient version checks `good()` before reading, which can lead to reading one extra line, and requires an extra check for `eof()`. The efficient version uses the return value of `getline()` directly in the while condition, which is more idiomatic and correct.
 
-## Example 11: Inefficient Loop Variable Type
+## Example 11: Using `std::pow` for integer powers of 2
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
+#include <cmath>
 
 int main() {
-    std::vector<int> numbers(10000);
-    for (int i = 0; i < numbers.size(); i++) {
-        numbers[i] = i;
+    long long result = 0;
+    for (int i = 0; i < 20; ++i) {
+        result += std::pow(2, i);
     }
-    
-    int sum = 0;
-    for (int i = 0; i < numbers.size(); i++) {
-        sum += numbers[i];
-    }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::cout << result << std::endl;
     return 0;
 }
 ```
@@ -573,25 +516,18 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
 
 int main() {
-    std::vector<int> numbers(10000);
-    for (size_t i = 0; i < numbers.size(); i++) {
-        numbers[i] = static_cast<int>(i);
+    long long result = 0;
+    for (int i = 0; i < 20; ++i) {
+        result += (1LL << i);
     }
-    
-    int sum = 0;
-    for (size_t i = 0; i < numbers.size(); i++) {
-        sum += numbers[i];
-    }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::cout << result << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses `int` for loop counters, which can cause signed/unsigned comparison warnings and potential overflow issues. The efficient version uses `size_t`, the appropriate type for container sizes and indices.
+Description: `std::pow` is a general-purpose floating-point function and is slow for integer powers. Use bit-shifting (`1LL << i`) for powers of 2.
 
 ## Example 12: Inefficient Usage of std::vector::erase
 
@@ -799,25 +735,28 @@ int main() {
 
 Description: The inefficient version passes a large vector by value, making an expensive copy each time. The efficient version passes by const reference, avoiding unnecessary copies.
 
-## Example 16: Inefficient Loop Traversal with Iterator Increment
+## Example 16: High contention on a single atomic
 
 ```cpp
 // inefficient version
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <atomic>
+
+std::atomic<long long> counter{0};
+
+void work() {
+    for (int i = 0; i < 1000000; ++i) {
+        counter++; // High contention from all threads
+    }
+}
 
 int main() {
-    std::vector<int> numbers(10000);
-    for (int i = 0; i < 10000; i++) {
-        numbers[i] = i;
-    }
-    
-    int sum = 0;
-    for (auto it = numbers.begin(); it != numbers.end(); it++) {
-        sum += *it;
-    }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 8; ++i) threads.emplace_back(work);
+    for (auto& t : threads) t.join();
+    std::cout << counter << std::endl;
     return 0;
 }
 ```
@@ -826,56 +765,47 @@ int main() {
 // efficient version
 #include <iostream>
 #include <vector>
+#include <thread>
+#include <atomic>
+
+std::atomic<long long> counter{0};
+
+void work() {
+    long long local_counter = 0; // Use a thread-local variable
+    for (int i = 0; i < 1000000; ++i) {
+        local_counter++;
+    }
+    counter += local_counter; // Update the shared atomic once
+}
 
 int main() {
-    std::vector<int> numbers(10000);
-    for (int i = 0; i < 10000; i++) {
-        numbers[i] = i;
-    }
-    
-    int sum = 0;
-    for (auto it = numbers.begin(); it != numbers.end(); ++it) {
-        sum += *it;
-    }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::vector<std::thread> threads;
+    for (int i = 0; i < 8; ++i) threads.emplace_back(work);
+    for (auto& t : threads) t.join();
+    std::cout << counter << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses post-increment `it++` which creates a temporary copy of the iterator before incrementing. The efficient version uses pre-increment `++it` which avoids the temporary copy.
+Description: Having many threads frequently update a single atomic variable creates high contention. A more scalable approach is to use thread-local counters and sum the results at the end.
 
-## Example 17: Inefficient Use of std::find with Custom Comparison
+## Example 17: `std::map` for key lookups when order is not needed
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
-
-struct Person {
-    std::string name;
-    int age;
-    
-    Person(const std::string& n, int a) : name(n), age(a) {}
-};
+#include <map>
 
 int main() {
-    std::vector<Person> people;
-    for (int i = 0; i < 1000; i++) {
-        people.push_back(Person("Person" + std::to_string(i), 20 + i % 50));
+    std::map<int, int> m;
+    for (int i = 0; i < 100000; ++i) {
+        m[i] = i;
     }
-    
-    bool found = false;
-    for (const auto& person : people) {
-        if (person.name == "Person500") {
-            found = true;
-            break;
-        }
+    long long sum = 0;
+    for (int i = 0; i < 100000; ++i) {
+        sum += m.count(i);
     }
-    
-    std::cout << "Person500 found: " << (found ? "yes" : "no") << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
@@ -883,33 +813,23 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
-
-struct Person {
-    std::string name;
-    int age;
-    
-    Person(const std::string& n, int a) : name(n), age(a) {}
-};
+#include <unordered_map>
 
 int main() {
-    std::vector<Person> people;
-    for (int i = 0; i < 1000; i++) {
-        people.push_back(Person("Person" + std::to_string(i), 20 + i % 50));
+    std::unordered_map<int, int> m;
+    for (int i = 0; i < 100000; ++i) {
+        m[i] = i;
     }
-    
-    auto it = std::find_if(people.begin(), people.end(),
-                          [](const Person& p) { return p.name == "Person500"; });
-    bool found = (it != people.end());
-    
-    std::cout << "Person500 found: " << (found ? "yes" : "no") << std::endl;
+    long long sum = 0;
+    for (int i = 0; i < 100000; ++i) {
+        sum += m.count(i);
+    }
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version manually iterates through the vector with a for loop. The efficient version uses `std::find_if()` with a lambda function, which better expresses the intent and may enable compiler optimizations.
+Description: `std::map` is a balanced binary search tree with O(log n) lookups. If element order is not required, `std::unordered_map` provides average O(1) lookups.
 
 ## Example 18: Inefficient String Comparison
 
@@ -1184,23 +1104,64 @@ int main() {
 
 Description: The inefficient version uses `std::accumulate` with string concatenation, which creates multiple temporary strings and has O(n²) complexity. The efficient version uses `std::ostringstream` which has amortized O(n) complexity.
 
-## Example 23: Inefficient Use of std::pow for Integer Powers
+## Example 23: `std::list::sort`
+
+```cpp
+// inefficient version
+#include <iostream>
+#include <list>
+#include <random>
+
+int main() {
+    std::list<int> l;
+    std::mt19937 rng(0);
+    for (int i = 0; i < 100000; ++i) l.push_back(rng());
+    
+    l.sort(); // list::sort has poor cache locality
+    
+    std::cout << l.front() << std::endl;
+    return 0;
+}
+```
+
+```cpp
+// efficient version
+#include <iostream>
+#include <list>
+#include <vector>
+#include <random>
+#include <algorithm>
+
+int main() {
+    std::list<int> l;
+    std::mt19937 rng(0);
+    for (int i = 0; i < 100000; ++i) l.push_back(rng());
+    
+    std::vector<int> v(l.begin(), l.end());
+    std::sort(v.begin(), v.end()); // vector sort is cache-friendly
+    l.assign(v.begin(), v.end());
+    
+    std::cout << l.front() << std::endl;
+    return 0;
+}
+```
+
+Description: `std::list::sort` cannot take advantage of cache locality because list nodes are not contiguous in memory. For sorting large amounts of data, it's often faster to copy the data to a `std::vector`, sort it, and then rebuild the list if necessary.
+
+## Example 24: Manual loop instead of `std::accumulate`
 
 ```cpp
 // inefficient version
 #include <iostream>
 #include <vector>
-#include <cmath>
 
 int main() {
-    std::vector<double> results;
-    
-    for (int i = 0; i < 1000000; i++) {
-        double result = std::pow(2.0, 3.0);
-        results.push_back(result);
+    std::vector<int> v(1000000, 1);
+    long long sum = 0;
+    for (size_t i = 0; i < v.size(); ++i) {
+        sum += v[i];
     }
-    
-    std::cout << "Result: " << results.back() << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
@@ -1209,64 +1170,17 @@ int main() {
 // efficient version
 #include <iostream>
 #include <vector>
+#include <numeric>
 
 int main() {
-    std::vector<double> results;
-    
-    for (int i = 0; i < 1000000; i++) {
-        double result = 2.0 * 2.0 * 2.0;
-        results.push_back(result);
-    }
-    
-    std::cout << "Result: " << results.back() << std::endl;
+    std::vector<int> v(1000000, 1);
+    long long sum = std::accumulate(v.begin(), v.end(), 0LL);
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version calls `std::pow` for a constant power computation. The efficient version computes the result directly using multiplication, which is much faster for simple cases like integer powers.
-
-## Example 24: Inefficient Recursive Fibonacci
-
-```cpp
-// inefficient version
-#include <iostream>
-#include <vector>
-
-int fibonacci(int n) {
-    if (n <= 1) return n;
-    return fibonacci(n - 1) + fibonacci(n - 2);
-}
-
-int main() {
-    std::vector<int> results;
-    
-    for (int i = 0; i < 35; i++) {
-        results.push_back(fibonacci(i));
-    }
-    
-    std::cout << "Fibonacci(34): " << results.back() << std::endl;
-    return 0;
-}
-```
-
-```cpp
-// efficient version
-#include <iostream>
-#include <vector>
-
-int main() {
-    std::vector<int> results = {0, 1};
-    
-    for (int i = 2; i < 35; i++) {
-        results.push_back(results[i-1] + results[i-2]);
-    }
-    
-    std::cout << "Fibonacci(34): " << results.back() << std::endl;
-    return 0;
-}
-```
-
-Description: The inefficient version uses recursive calls, recomputing the same values multiple times with exponential complexity O(2ⁿ). The efficient version uses dynamic programming to store intermediate results, reducing complexity to O(n).
+Description: Standard library algorithms like std::accumulate are often more expressive, less error-prone, and can be better optimized by the compiler.
 
 ## Example 25: Inefficient String Concatenation in Tight Loop
 
@@ -1490,22 +1404,20 @@ int main() {
 
 Description: The inefficient version creates a temporary `Person` object and then copies or moves it into the vector. The efficient version uses `emplace_back()` to construct the object directly in the vector, and also reserves memory to avoid reallocations.
 
-## Example 29: Inefficient Dynamic Memory Management
+## Example 29: Re-calculating a value in a loop
 
 ```cpp
 // inefficient version
 #include <iostream>
+#include <cmath>
 
 int main() {
-    int sum = 0;
-    
-    for (int i = 0; i < 1000000; i++) {
-        int* ptr = new int(i);
-        sum += *ptr;
-        delete ptr;
+    double angle = 0.785; // pi/4
+    double result = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        result += std::sin(angle); // sin() is calculated every time
     }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::cout << result << std::endl;
     return 0;
 }
 ```
@@ -1513,20 +1425,21 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
+#include <cmath>
 
 int main() {
-    int sum = 0;
-    
-    for (int i = 0; i < 1000000; i++) {
-        sum += i;
+    double angle = 0.785; // pi/4
+    double result = 0;
+    const double sin_val = std::sin(angle); // Calculate once
+    for (int i = 0; i < 1000000; ++i) {
+        result += sin_val;
     }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::cout << result << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version allocates and deallocates memory in a tight loop, causing significant overhead. The efficient version avoids unnecessary heap allocations by using stack variables directly.
+Description: If a calculation inside a loop uses variables that don't change during the loop (loop-invariant), perform the calculation once before the loop.
 
 ## Example 30: Inefficient Use of std::vector for Fixed-Size Arrays
 
@@ -1573,31 +1486,19 @@ int main() {
 
 Description: The inefficient version uses `std::vector` for a small, fixed-size collection. The efficient version uses `std::array` which avoids heap allocation and has less overhead.
 
-## Example 31: Inefficient String Comparison with find()
+## Example 31: Manual loop instead of `std::fill`
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <string>
 #include <vector>
 
 int main() {
-    std::vector<std::string> words = {
-        "apple", "banana", "orange", "grape", "pear"
-    };
-    
-    int count = 0;
-    std::string prefix = "ap";
-    
-    for (int i = 0; i < 100000; i++) {
-        for (const auto& word : words) {
-            if (word.find(prefix) == 0) {
-                count++;
-            }
-        }
+    std::vector<int> v(1000000);
+    for (size_t i = 0; i < v.size(); ++i) {
+        v[i] = 42;
     }
-    
-    std::cout << "Count: " << count << std::endl;
+    std::cout << v.back() << std::endl;
     return 0;
 }
 ```
@@ -1605,31 +1506,18 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <string>
 #include <vector>
+#include <algorithm>
 
 int main() {
-    std::vector<std::string> words = {
-        "apple", "banana", "orange", "grape", "pear"
-    };
-    
-    int count = 0;
-    std::string prefix = "ap";
-    
-    for (int i = 0; i < 100000; i++) {
-        for (const auto& word : words) {
-            if (word.substr(0, prefix.length()) == prefix) {
-                count++;
-            }
-        }
-    }
-    
-    std::cout << "Count: " << count << std::endl;
+    std::vector<int> v(1000000);
+    std::fill(v.begin(), v.end(), 42);
+    std::cout << v.back() << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses `find()` for prefix matching, but it's designed for substring search anywhere. The efficient version directly compares the prefix using `substr()`, which is clearer and potentially faster for this specific use case.
+Description: Use standard library algorithms like `std::fill` when they fit the task. They are more expressive and can be heavily optimized by the compiler (e.g., using `memset` for trivial types).
 
 ## Example 32: Inefficient Function Call Inside Loop
 
@@ -2115,160 +2003,6 @@ int main() {
 
 Description: The inefficient version uses recursion, which has function call overhead and stack frame creation for each call. The efficient version uses iteration, which avoids function call overhead.
 
-## Example 41: Inefficient Memory Management in Class
-
-```cpp
-// inefficient version
-#include <iostream>
-#include <string>
-
-class Message {
-    char* buffer;
-    size_t size;
-    
-public:
-    Message(const std::string& text) {
-        size = text.length();
-        buffer = new char[size + 1];
-        std::copy(text.begin(), text.end(), buffer);
-        buffer[size] = '\0';
-    }
-    
-    ~Message() {
-        delete[] buffer;
-    }
-    
-    // Missing copy constructor and assignment operator
-    
-    std::string getText() const {
-        return std::string(buffer, size);
-    }
-};
-
-int main() {
-    Message msg1("Hello, World!");
-    Message msg2 = msg1;  // Shallow copy, will cause double-free
-    
-    std::cout << "Message 1: " << msg1.getText() << std::endl;
-    std::cout << "Message 2: " << msg2.getText() << std::endl;
-    
-    return 0;
-}
-```
-
-```cpp
-// efficient version
-#include <iostream>
-#include <string>
-#include <memory>
-
-class Message {
-    std::unique_ptr<char[]> buffer;
-    size_t size;
-    
-public:
-    Message(const std::string& text) {
-        size = text.length();
-        buffer = std::make_unique<char[]>(size + 1);
-        std::copy(text.begin(), text.end(), buffer.get());
-        buffer[size] = '\0';
-    }
-    
-    // Copy constructor
-    Message(const Message& other) {
-        size = other.size;
-        buffer = std::make_unique<char[]>(size + 1);
-        std::copy(other.buffer.get(), other.buffer.get() + size + 1, buffer.get());
-    }
-    
-    // Copy assignment operator
-    Message& operator=(const Message& other) {
-        if (this != &other) {
-            size = other.size;
-            buffer = std::make_unique<char[]>(size + 1);
-            std::copy(other.buffer.get(), other.buffer.get() + size + 1, buffer.get());
-        }
-        return *this;
-    }
-    
-    std::string getText() const {
-        return std::string(buffer.get(), size);
-    }
-};
-
-int main() {
-    Message msg1("Hello, World!");
-    Message msg2 = msg1;  // Deep copy
-    
-    std::cout << "Message 1: " << msg1.getText() << std::endl;
-    std::cout << "Message 2: " // efficient version
-#include <iostream>
-#include <string>
-#include <memory>
-
-class Message {
-    std::unique_ptr<char[]> buffer;
-    size_t size;
-    
-public:
-    Message(const std::string& text) {
-        size = text.length();
-        buffer = std::make_unique<char[]>(size + 1);
-        std::copy(text.begin(), text.end(), buffer.get());
-        buffer[size] = '\0';
-    }
-    
-    // Copy constructor
-    Message(const Message& other) {
-        size = other.size;
-        buffer = std::make_unique<char[]>(size + 1);
-        std::copy(other.buffer.get(), other.buffer.get() + size + 1, buffer.get());
-    }
-    
-    // Copy assignment operator
-    Message& operator=(const Message& other) {
-        if (this != &other) {
-            size = other.size;
-            buffer = std::make_unique<char[]>(size + 1);
-            std::copy(other.buffer.get(), other.buffer.get() + size + 1, buffer.get());
-        }
-        return *this;
-    }
-    
-    std::string getText() const {
-        return std::string(buffer.get(), size);
-    }
-};
-
-int main() {
-    Message msg1("Hello, World!");
-    Message msg2 = msg1;  // Deep copy
-    
-    std::cout << "Message 1: " << msg1.getText() << std::endl;
-    std::cout << "Message 2: " 
-```
-<blockquote>
-
-Error: Sorry, the response hit the length limit. Please rephrase your prompt.
-
-</blockquote>
-
-`(4 min, 40.927 s)`
-
-</blockquote>
-
-<blockquote>
-
-#### philipobi:
-Please also provide examples 41 - 50
-
-</blockquote>
-
-<blockquote>
-
-#### GitHub Copilot (claude-3.7-sonnet-thought):
-
-# C++ Efficiency Examples (41-50)
 
 ## Example 41: Inefficient Lookup with std::map for Known Enum Values
 
@@ -2313,27 +2047,26 @@ int main() {
 
 Description: Using `std::map` for small enum-based lookups is inefficient because it involves dynamic allocation and tree traversal operations. The efficient version uses a simple array with O(1) lookup, which is much faster for small enum-indexed data.
 
-## Example 42: Unnecessary Exception Handling in Hot Loop
+## Example 42: Inefficient `std::string::erase`
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
-#include <stdexcept>
+#include <string>
+#include <algorithm>
 
 int main() {
-    std::vector<int> numbers(10000000, 5);
-    int sum = 0;
-    
-    for (int i = 0; i < numbers.size(); ++i) {
-        try {
-            sum += numbers.at(i); // Uses bounds checking with exceptions
-        } catch (const std::out_of_range&) {
-            // Won't happen, but the try-catch machinery is still present
+    std::string s(10000, 'a');
+    s[5000] = 'b';
+    // Repeatedly calling erase is O(n^2) because it shifts elements each time
+    for (size_t i = 0; i < s.length(); ) {
+        if (s[i] == 'a') {
+            s.erase(i, 1);
+        } else {
+            ++i;
         }
     }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::cout << s << std::endl;
     return 0;
 }
 ```
@@ -2341,38 +2074,37 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
+#include <string>
+#include <algorithm>
 
 int main() {
-    std::vector<int> numbers(10000000, 5);
-    int sum = 0;
-    
-    for (size_t i = 0; i < numbers.size(); ++i) {
-        sum += numbers[i]; // No exception handling overhead
-    }
-    
-    std::cout << "Sum: " << sum << std::endl;
+    std::string s(10000, 'a');
+    s[5000] = 'b';
+    s.erase(std::remove(s.begin(), s.end(), 'a'), s.end());
+    std::cout << s << std::endl;
     return 0;
 }
 ```
 
-Description: Exception handling machinery adds significant overhead, especially in hot loops. The inefficient version uses `at()` which throws exceptions for bounds checking, while the efficient version uses operator `[]` which avoids this overhead when bounds checking isn't needed.
+Description: Repeatedly erasing single characters from a string is very inefficient. Use the erase-remove idiom, which moves all elements to be kept to the front in a single pass and then performs one erase operation.
 
-## Example 43: Using std::endl Instead of '\n'
+## Example 43: `std::map` for dense integer keys
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
+#include <map>
 
 int main() {
-    std::vector<int> numbers(10000, 42);
-    
-    for (int num : numbers) {
-        std::cout << num << std::endl; // Flushes buffer on every iteration
+    std::map<int, int> m;
+    for (int i = 0; i < 10000; ++i) {
+        m[i] = i * 2; // Using map for keys 0, 1, 2, ...
     }
-    
-    std::cout << "Done" << std::endl;
+    long long sum = 0;
+    for (int i = 0; i < 10000; ++i) {
+        sum += m[i];
+    }
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
@@ -2383,18 +2115,20 @@ int main() {
 #include <vector>
 
 int main() {
-    std::vector<int> numbers(10000, 42);
-    
-    for (int num : numbers) {
-        std::cout << num << '\n'; // No buffer flushing
+    std::vector<int> v(10000);
+    for (int i = 0; i < 10000; ++i) {
+        v[i] = i * 2; // Using vector index for keys 0, 1, 2, ...
     }
-    
-    std::cout << "Done" << std::endl; // Single flush at the end
+    long long sum = 0;
+    for (int i = 0; i < 10000; ++i) {
+        sum += v[i];
+    }
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
 
-Description: Using `std::endl` not only inserts a newline character but also flushes the output buffer, which is expensive when done repeatedly. The efficient version uses `'\n'` characters for line breaks and only flushes once at the end, improving output performance.
+Description: A `std::map` has significant memory and performance overhead compared to a vector. If you have dense, zero-based integer keys, use a `std::vector` where the key is the index.
 
 ## Example 44: Cache-Unfriendly Memory Access Pattern
 
@@ -2502,31 +2236,19 @@ int main() {
 
 Description: `std::function` introduces type erasure overhead that can impact performance in tight loops. The efficient version uses a direct function pointer which avoids this overhead and allows better compiler optimizations.
 
-## Example 46: Random Number Generation with Modulo Bias
+## Example 46: Using `std::vector` for front insertions/deletions
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <random>
+#include <vector>
 
 int main() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    
-    const int dice_sides = 6;
-    const int rolls = 1000000;
-    int counts[dice_sides] = {0};
-    
-    // This creates modulo bias when RAND_MAX is not a multiple of dice_sides
-    for (int i = 0; i < rolls; ++i) {
-        int roll = gen() % dice_sides + 1;
-        counts[roll-1]++;
+    std::vector<int> v;
+    for (int i = 0; i < 10000; ++i) {
+        v.insert(v.begin(), i);
     }
-    
-    for (int i = 0; i < dice_sides; ++i) {
-        std::cout << "Side " << (i+1) << ": " << counts[i] << std::endl;
-    }
-    
+    std::cout << v.front() << std::endl;
     return 0;
 }
 ```
@@ -2534,31 +2256,19 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <random>
+#include <deque>
 
 int main() {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist(1, 6);
-    
-    const int dice_sides = 6;
-    const int rolls = 1000000;
-    int counts[dice_sides] = {0};
-    
-    for (int i = 0; i < rolls; ++i) {
-        int roll = dist(gen); // Uses proper distribution
-        counts[roll-1]++;
+    std::deque<int> d;
+    for (int i = 0; i < 10000; ++i) {
+        d.push_front(i);
     }
-    
-    for (int i = 0; i < dice_sides; ++i) {
-        std::cout << "Side " << (i+1) << ": " << counts[i] << std::endl;
-    }
-    
+    std::cout << d.front() << std::endl;
     return 0;
 }
 ```
 
-Description: Using modulo (`%`) on random numbers causes bias when the random number range isn't divisible by the desired range. The efficient version uses `std::uniform_int_distribution` which guarantees uniform distribution without bias.
+Description: Inserting at the beginning of a `std::vector` is an O(n) operation as all subsequent elements must be shifted. Use `std::deque` for efficient O(1) insertions at both ends.
 
 ## Example 47: Linear Search Instead of Binary Search on Sorted Data
 
@@ -2773,10 +2483,3 @@ int main() {
     return 0;
 }
 ```
-
-Description: The inefficient recursive version has exponential time complexity O(2^n) due to redundant recalculations. The efficient version uses dynamic programming with memoization to calculate each Fibonacci number only once, resulting in linear O(n) time complexity.
-
-`(1 min, 14.113 s)`
-
-</blockquote>
-
