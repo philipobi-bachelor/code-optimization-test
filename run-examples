@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from arango import ArangoClient
 from benchmark import Benchmarker
-import statistics
 import json
 
 benchmarkTemplate = """\
@@ -16,33 +15,28 @@ void benchmarkFunc() {{
 
 int main() {{
     ankerl::nanobench::Bench benchmark;
-    benchmark.output(nullptr);
+    benchmark
+    .output(nullptr)
+    .epochs(15)
+    .minEpochIterations(10)
+    .minEpochTime(std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::milliseconds(100)
+    ));
     benchmark.run("test", []() {{benchmarkFunc();}});
-    benchmark.render(ankerl::nanobench::templates::pyperf(), std::cerr);
+    benchmark.render("{nanobenchOutputTemplate}", std::cerr);
 }}
 """
 
-""" nanobench output:
-{
-    "benchmarks": [{"runs": [{"values": [float*]}]}],
-    "metadata": {
-    "loops": int,
-    "inner_loops": int,
-    "name": str,
-    "unit": "second"
-    },
-    "version": str
-}
-"""
-
+nanobenchOutputTemplate = '{ {{#result}} \\"runtimeAvg\\": {{average(elapsed)}} {{/result}} }'
 
 def benchmarkExample(benchmarker:Benchmarker, exampleCode):
-    requiredIncludes = set(("#include <iostream>",))
+    requiredIncludes = set(("#include <iostream>", "#include <chrono>"))
     includes = requiredIncludes | set(exampleCode["includes"])
     code = benchmarkTemplate.format(
         includes = "\n".join(includes),
         additionalDefs = exampleCode["additionalDefs"],
-        benchmarkBody = exampleCode["mainBody"]
+        benchmarkBody = exampleCode["mainBody"],
+        nanobenchOutputTemplate = nanobenchOutputTemplate,
     )
     
     # discard output from stdout as it may be flooded by the benchmarked function
@@ -57,32 +51,30 @@ def benchmarkExample(benchmarker:Benchmarker, exampleCode):
     result["compiled"]=True
     if "Execution failed" in output: return result
     result["executed"] = True
-    try: 
-        data = json.loads(output)
-        runtimes = data["benchmarks"][0]["runs"][0]["values"]
-        result["runtimeAvg"] = statistics.mean(runtimes)
-    except json.JSONDecodeError: pass
     
+    try: 
+        result["runtimeAvg"] = json.loads(output)["runtimeAvg"]
+    except (json.JSONDecodeError, KeyError): pass
     return result
+    
 
 def processExample(benchmarker, example):
     _key = example["_key"]
     print(f"Processing example {_key}", end="\r")
     update = { "_key": _key }
-    update["code"] = benchmarkExample(benchmarker, example["code"])
-    update["codeFixed"] = benchmarkExample(benchmarker, example["codeFixed"])
+    update["codeSlow"] = benchmarkExample(benchmarker, example["codeSlow"])
+    update["codeFast"] = benchmarkExample(benchmarker, example["codeFast"])
     return update
 
 
 def main():
     db = ArangoClient("http://localhost:8529").db()
-    exampleCollection = db.collection("code-examples")
 
     benchmarker = Benchmarker()
 
     cursor = db.aql.execute(
     """
-    for example in `code-examples` 
+    for example in `code-optimization` 
       sort to_number(example._key) asc
       return example
     """
@@ -90,7 +82,15 @@ def main():
     
     updates = [processExample(benchmarker, example) for example in cursor]
     
-    exampleCollection.update_many(updates)
+    db.collection("code-optimization").update_many(updates)
+
+def test():
+    db = ArangoClient("http://localhost:8529").db()
+    examples = db.collection("code-optimization")
+    example = examples.get("20")
+    benchmarker = Benchmarker()
+    result = benchmarkExample(benchmarker, example["codeSlow"])
+    print(result["output"])
 
 if __name__=="__main__":
     main()

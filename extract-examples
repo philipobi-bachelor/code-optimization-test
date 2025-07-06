@@ -54,8 +54,8 @@ def findMainBody(code:str) -> str:
 """   
 exampleRegex = re.compile(
     r"## Example \d+: (?P<title>[^\n]*)\s*"
-    r"```cpp\s*(?P<code>[^`]*)```\s*"
-    r"```cpp\s*(?P<codeFixed>[^`]*)```\s*"
+    r"```cpp\s*(?P<codeSlow>[^`]*)```\s*"
+    r"```cpp\s*(?P<codeFast>[^`]*)```\s*"
     r"Description: (?P<description>[^\n]*)\s*",
     flags=re.DOTALL
 )
@@ -93,21 +93,21 @@ def processCode(code):
 starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
 def extractExamples():
-    with open("generated-examples.md", "r") as f:
+    with open("examples.md", "r") as f:
         buffer = f.read()
     
     def processMatch(i, match):
         title = match.group("title")
         description = match.group("description")
-        code = match.group("code")
-        codeFixed = match.group("codeFixed")
+        codeSlow = match.group("codeSlow")
+        codeFast = match.group("codeFast")
 
         return {
             "_key" : str(i),
             "title": title,
             "description": description,
-            "code" : processCode(code),
-            "codeFixed" : processCode(codeFixed)
+            "codeSlow" : processCode(codeSlow),
+            "codeFast" : processCode(codeFast)
         }
     
     return starmap(
@@ -116,8 +116,8 @@ def extractExamples():
     )
 
 def insertExamples():
-    exampleCollection = ArangoClient("http://localhost:8529").db().collection("code-examples")
-    exampleCollection.import_bulk(
+    examples = ArangoClient("http://localhost:8529").db().collection("code-optimization")
+    examples.import_bulk(
         documents = list(extractExamples()),
         on_duplicate="update"
     )

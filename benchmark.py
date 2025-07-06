@@ -46,7 +46,7 @@ class Benchmarker:
             "if [ $exitCode -ne 0 ]; then "
                 "echo Compilation failed 1>&2; exit 1; "
             "fi; "
-            "timeout 120 ./a.out; "
+            "timeout 600 ./a.out; "
             "exitCode=$?; "
             "if [ $exitCode -ne 0 ]; then "
                 "echo Execution failed 1>&2; exit 1; "
