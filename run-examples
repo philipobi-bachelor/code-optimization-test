@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from arango import ArangoClient
-from benchmark import Benchmarker
+from utils import Benchmarker, DB
 import json
 
 benchmarkTemplate = """\
@@ -68,28 +68,16 @@ def processExample(benchmarker, example):
 
 
 def main():
-    db = ArangoClient("http://localhost:8529").db()
-
     benchmarker = Benchmarker()
-
-    cursor = db.aql.execute(
-    """
-    for example in `code-optimization` 
-      sort to_number(example._key) asc
-      return example
-    """
-    )
-    
-    updates = [processExample(benchmarker, example) for example in cursor]
-    
-    db.collection("code-optimization").update_many(updates)
+    updates = [processExample(benchmarker, example) for example in DB.getExamplesSorted()]
+    DB.examples.update_many(updates)
 
 def test():
-    db = ArangoClient("http://localhost:8529").db()
-    examples = db.collection("code-optimization")
-    example = examples.get("20")
+    example = DB.examples.get("26")
     benchmarker = Benchmarker()
     result = benchmarkExample(benchmarker, example["codeSlow"])
+    print(result["output"])
+    result = benchmarkExample(benchmarker, example["codeFast"])
     print(result["output"])
 
 if __name__=="__main__":

@@ -1,6 +1,7 @@
 import docker
 import socket
 import struct
+from arango import ArangoClient
 
 def readStreamsFromSock(sock, stdout=True, stderr=True):
     # stream identifiers: stdout: 1 , stderr: 2
@@ -26,7 +27,7 @@ def readStreamsFromSock(sock, stdout=True, stderr=True):
         stderr = buffers[2].decode(errors="ignore")
     )
 
-class Benchmarker:            
+class Benchmarker:
     def __init__(self):
         self.client = docker.from_env()
 
@@ -64,3 +65,17 @@ class Benchmarker:
         sock.sendall(code.encode())
         sock.shutdown(socket.SHUT_WR)
         return readStreamsFromSock(sock, stdout=stdout, stderr=stderr)
+    
+class DB:
+    db = ArangoClient("http://localhost:8529").db()
+    examples = db.collection("code-optimization")
+
+    @staticmethod
+    def getExamplesSorted():
+        return DB.db.aql.execute(
+        """
+        for example in `code-optimization` 
+            sort to_number(example._key) asc
+            return example
+        """
+        )

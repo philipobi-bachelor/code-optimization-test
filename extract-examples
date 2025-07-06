@@ -2,8 +2,7 @@
 import re
 import logging
 import sys
-from arango import ArangoClient
-
+from utils import DB
 logger = logging.getLogger(__name__)
 
 def findMainBody(code:str) -> str:
@@ -116,8 +115,7 @@ def extractExamples():
     )
 
 def insertExamples():
-    examples = ArangoClient("http://localhost:8529").db().collection("code-optimization")
-    examples.import_bulk(
+    DB.examples.import_bulk(
         documents = list(extractExamples()),
         on_duplicate="update"
     )
