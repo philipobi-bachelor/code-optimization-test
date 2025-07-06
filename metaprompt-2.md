@@ -1,6 +1,7 @@
 ---
 Source: https://chatgpt.com/c/68695aeb-bfe8-8008-8e9b-2b31ad4355c4
 Model: o4-mini
+Exported with: https://github.com/pionxzh/chatgpt-exporter
 ---
 
 # C++ Inefficiency Examples

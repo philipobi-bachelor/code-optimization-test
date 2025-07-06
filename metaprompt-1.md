@@ -1,6 +1,7 @@
 ---
 Source: https://chatgpt.com/c/68646f4d-2fd0-8008-8a44-7a2c37174430
 Model: o4-mini
+Exported with: https://github.com/pionxzh/chatgpt-exporter
 ---
 
 # Inefficient C++ Code Prompts
