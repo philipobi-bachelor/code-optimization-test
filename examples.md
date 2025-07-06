@@ -205,28 +205,27 @@ int main() {
 
 Description: The inefficient version uses `std::find` which has O(n) complexity, resulting in O(n²) overall complexity. The efficient version uses `std::unordered_set` for O(1) lookups, resulting in O(n) overall complexity.
 
-## Example 6: Inefficient String Splitting
+## Example 6: Passing `shared_ptr` by value
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <string>
-#include <vector>
+#include <memory>
+
+void use_ptr(std::shared_ptr<int> p, int& counter) { // Copies shared_ptr, increments ref count
+    if (p) {
+        counter += *p % 2 ? 1 : -1;
+    }
+}
 
 int main() {
-    std::string input = "apple,banana,orange,grape,pear,peach,kiwi";
-    std::vector<std::string> tokens;
-    
-    size_t start = 0;
-    size_t end = 0;
-    while ((end = input.find(',', start)) != std::string::npos) {
-        std::string token = input.substr(start, end - start);
-        tokens.push_back(token);
-        start = end + 1;
+    auto ptr = std::make_shared<int>(0);
+    int counter = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        *ptr = i;
+        use_ptr(ptr, counter);
     }
-    tokens.push_back(input.substr(start));
-    
-    std::cout << "Tokens: " << tokens.size() << std::endl;
+    std::cout << counter << std::endl;
     return 0;
 }
 ```
@@ -234,28 +233,27 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <string>
-#include <vector>
-#include <string_view>
+#include <memory>
+
+void use_ptr(const std::shared_ptr<int>& p, int& counter) { // No copy, no ref count change
+    if (p) {
+        counter += *p % 2 ? 1 : -1;
+    }
+}
 
 int main() {
-    std::string input = "apple,banana,orange,grape,pear,peach,kiwi";
-    std::vector<std::string> tokens;
-    
-    size_t start = 0;
-    size_t end = 0;
-    while ((end = input.find(',', start)) != std::string::npos) {
-        tokens.emplace_back(input.substr(start, end - start));
-        start = end + 1;
+    auto ptr = std::make_shared<int>(0);
+    int counter = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        *ptr = i;
+        use_ptr(ptr, counter);
     }
-    tokens.emplace_back(input.substr(start));
-    
-    std::cout << "Tokens: " << tokens.size() << std::endl;
+    std::cout << counter << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version creates temporary strings before pushing them. The efficient version uses `emplace_back()` to construct strings directly in the vector, avoiding unnecessary copies.
+Description: Passing a `shared_ptr` by value copies it and involves an atomic increment/decrement of the reference count. Pass by `const` reference if the function doesn't need to modify or store a copy of the `shared_ptr`.´
 
 ## Example 7: Inefficient Use of emplace_back with Temporary Objects
 
@@ -986,37 +984,19 @@ int main() {
 
 Description: The inefficient version uses `auto` without reference, creating copies of each string during iteration. The efficient version uses `const auto&` to avoid copying strings.
 
-## Example 21: Inefficient Lambda Capture
+## Example 21: Opening/closing file in a loop
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
-#include <algorithm>
-#include <numeric>
+#include <fstream>
+#include <string>
 
 int main() {
-    std::vector<int> data(10000, 1);
-    std::vector<int> multipliers(10000);
-    for (int i = 0; i < 10000; i++) {
-        multipliers[i] = i % 10 + 1;
+    for (int i = 0; i < 1000; ++i) {
+        std::ofstream file("log.txt", std::ios_base::app); // Open and close file handle
+        file << "Log entry " << i << "\n";
     }
-    
-    std::vector<int> results;
-    results.resize(data.size());
-    
-    // Capture entire vectors by value
-    std::transform(data.begin(), data.end(), results.begin(),
-        [multipliers](int val) {
-            int sum = 0;
-            for (size_t i = 0; i < multipliers.size(); i++) {
-                sum += val * (i % 100 == 0 ? multipliers[i] : 1);
-            }
-            return sum;
-        }
-    );
-    
-    std::cout << "Result sum: " << std::accumulate(results.begin(), results.end(), 0) << std::endl;
     return 0;
 }
 ```
@@ -1024,37 +1004,20 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
-#include <algorithm>
-#include <numeric>
+#include <fstream>
+#include <string>
 
 int main() {
-    std::vector<int> data(10000, 1);
-    std::vector<int> multipliers(10000);
-    for (int i = 0; i < 10000; i++) {
-        multipliers[i] = i % 10 + 1;
+    std::ofstream file("log.txt", std::ios_base::app); // Open once
+    for (int i = 0; i < 1000; ++i) {
+        file << "Log entry " << i << "\n";
     }
-    
-    std::vector<int> results;
-    results.resize(data.size());
-    
-    // Capture vector by reference
-    std::transform(data.begin(), data.end(), results.begin(),
-        [&multipliers](int val) {
-            int sum = 0;
-            for (size_t i = 0; i < multipliers.size(); i++) {
-                sum += val * (i % 100 == 0 ? multipliers[i] : 1);
-            }
-            return sum;
-        }
-    );
-    
-    std::cout << "Result sum: " << std::accumulate(results.begin(), results.end(), 0) << std::endl;
+    // File is closed automatically by destructor
     return 0;
 }
 ```
 
-Description: The inefficient version captures a large vector by value, creating an unnecessary copy. The efficient version captures by reference, avoiding the copy.
+Description: Opening and closing a file is a slow operation that involves system calls. Open the file once before the loop and close it after the loop finishes.
 
 ## Example 22: Using std::accumulate with Inefficient Operation
 
@@ -1221,28 +1184,23 @@ int main() {
 
 Description: The inefficient version uses the `+` operator for concatenation, creating a new string each time. The efficient version uses `reserve()` to pre-allocate space and `+=` operator, which appends without creating a new string.
 
-## Example 26: Using Unoptimized std::pair for Simple Structs
+## Example 26: Virtual function call in a hot loop
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
-#include <utility>
-#include <string>
+#include <memory>
+
+struct Base { virtual int val(int i) = 0; };
+struct Derived : Base { int val(int i) override { return i%2; } };
 
 int main() {
-    std::vector<std::pair<std::string, int>> people;
-    
-    for (int i = 0; i < 10000; i++) {
-        people.push_back(std::make_pair("Person" + std::to_string(i), 20 + (i % 50)));
+    std::unique_ptr<Base> p = std::make_unique<Derived>();
+    long long sum = 0;
+    for (int i = 0; i < 10000000; ++i) {
+        sum += p->val(i); // Virtual call can inhibit inlining
     }
-    
-    int sum = 0;
-    for (const auto& person : people) {
-        sum += person.second;
-    }
-    
-    std::cout << "Sum of ages: " << sum << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
@@ -1250,32 +1208,23 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
-#include <string>
+#include <memory>
 
-struct Person {
-    std::string name;
-    int age;
-};
+struct Base { virtual int val(int i) = 0; };
+struct Derived : Base { int val(int i) override { return i%2; } };
 
 int main() {
-    std::vector<Person> people;
-    
-    for (int i = 0; i < 10000; i++) {
-        people.push_back({"Person" + std::to_string(i), 20 + (i % 50)});
+    std::unique_ptr<Derived> p = std::make_unique<Derived>();
+    long long sum = 0;
+    for (int i = 0; i < 10000000; ++i) {
+        sum += p->val(i); // Direct call can be inlined
     }
-    
-    int sum = 0;
-    for (const auto& person : people) {
-        sum += person.age;
-    }
-    
-    std::cout << "Sum of ages: " << sum << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses `std::pair` which has generic but less descriptive member names (first, second). The efficient version uses a custom struct with meaningful member names, improving readability and potentially allowing compiler optimizations.
+Description: Virtual function calls can be slower than direct calls due to vtable lookups and can prevent compiler optimizations like inlining. If the derived type is known within a scope, cast the pointer and call the function directly.
 
 ## Example 27: Inefficient Use of std::shared_ptr for Internal Implementation
 
@@ -1959,27 +1908,20 @@ int main() {
 
 Description: The inefficient version unnecessarily checks if `i < data.size()` in every iteration, even though the loop condition already ensures this. The efficient version avoids this redundant check.
 
-## Example 40: Inefficient Recursive Implementation for Factorials
+## Example 40: Division and Modulo with powers of two
 
 ```cpp
 // inefficient version
 #include <iostream>
-#include <vector>
-
-unsigned long factorial(unsigned int n) {
-    if (n == 0 || n == 1)
-        return 1;
-    return n * factorial(n - 1);
-}
 
 int main() {
-    std::vector<unsigned long> results;
-    
-    for (unsigned int i = 0; i < 13; i++) {
-        results.push_back(factorial(i));
+    unsigned x = 123456;
+    unsigned long sum = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        sum += (x + i) / 16;
+        sum += (x + i) % 16;
     }
-    
-    std::cout << "Factorial of 12: " << results.back() << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
@@ -1987,21 +1929,20 @@ int main() {
 ```cpp
 // efficient version
 #include <iostream>
-#include <vector>
 
 int main() {
-    std::vector<unsigned long> results = {1}; // 0! = 1
-    
-    for (unsigned int i = 1; i < 13; i++) {
-        results.push_back(results.back() * i);
+    unsigned x = 123456;
+    unsigned long sum = 0;
+    for (int i = 0; i < 1000000; ++i) {
+        sum += (x + i) >> 4;
+        sum += (x + i) & 15;
     }
-    
-    std::cout << "Factorial of 12: " << results.back() << std::endl;
+    std::cout << sum << std::endl;
     return 0;
 }
 ```
 
-Description: The inefficient version uses recursion, which has function call overhead and stack frame creation for each call. The efficient version uses iteration, which avoids function call overhead.
+Description: Integer division and modulo are much slower than bitwise operations. For powers of two, use bit-shifting (`>>`) for division and bitwise AND (`&`) for modulo.
 
 
 ## Example 41: Inefficient Lookup with std::map for Known Enum Values
