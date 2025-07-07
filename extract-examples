@@ -2,7 +2,7 @@
 import re
 import logging
 import sys
-from utils import DB
+from utils import DB, starmap
 logger = logging.getLogger(__name__)
 
 def findMainBody(code:str) -> str:
@@ -88,8 +88,6 @@ def processCode(code):
         "mainBody": mainBody,
         "additionalDefs": additionalDefs
     }
-
-starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
 def extractExamples():
     with open("examples.md", "r") as f:

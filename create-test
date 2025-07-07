@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+import random
+from utils import DB, starmap
+
+testTeamplate = """\
+{includes}
+
+{additionalDefs}
+
+int main () {{
+    {mainBody}
+}}
+"""
+
+namespaceTemplate = """\
+namespace {namespaceName} {{
+    {namespaceBody}
+}}
+"""
+
+codeTemplate = """\
+// Task {exampleNumber}
+{{
+    {usingStatement}
+    {codeBody}
+}}
+"""
+
+def renderTest(testTasks):
+    includes = set((
+        include
+        for codeSnippet in testTasks
+            for include in codeSnippet["includes"]
+    ))
+
+    def renderCode(exampleNumber, codeSnippet):
+        namespace = None
+        if codeSnippet["additionalDefs"]:
+            namespace = namespaceTemplate.format(
+                namespaceName=f"task{exampleNumber}",
+                namespaceBody=codeSnippet["additionalDefs"]
+            )
+        
+        code = codeTemplate.format(
+            exampleNumber = exampleNumber,
+            usingStatement = (
+                f"using namespace task{exampleNumber};" 
+                if namespace is not None else ""
+            ),
+            codeBody = codeSnippet["mainBody"]
+        )
+
+        return (namespace, code)
+    
+    (namespaces, codeBlocks) = zip(
+        *starmap(
+            renderCode, 
+            enumerate(testTasks, start=1)
+        )
+    )
+
+    return testTeamplate.format(
+        includes = "\n".join(includes),
+        additionalDefs = "\n".join(filter(
+            lambda namespace: namespace is not None,
+            namespaces
+        )),
+        mainBody = "\n\n".join(codeBlocks)
+    )
+
+def makeTestInfo(choices, testNum):
+    yield f"Info for test {testNum}:\n"
+    yield from starmap(
+        lambda i, choice: f"Task {i}: Example {i} / \"{choice}\"\n",
+        enumerate(choices, start=1)
+    )
+
+def main():
+    random.seed(123)
+    
+    testTasks1 = []
+    choices1 = []
+    testTasks2 = []
+    choices2 = []
+
+    choices = ["codeSlow", "codeFast"]
+    for i, example in enumerate(DB.getExamplesSorted(), start=1):
+        assert str(i) == example["_key"]
+        choice = random.binomialvariate(n=1, p=0.5)
+        (choice1, choice2) = (choices[choice], choices[int(not choice)])
+        
+        choices1.append(choice1)
+        testTasks1.append(example[choice1])
+        
+        choices2.append(choice2)
+        testTasks2.append(example[choice2])
+
+    for i, testTasks, choices in ((1, testTasks1, choices1), (2, testTasks2, choices2)):
+        with open(f"main{i}.cpp", "w") as f: f.write(renderTest(testTasks))
+        with open(f"info{i}", "w") as f: f.writelines(makeTestInfo(choices, testNum=i))
+
+
+if __name__ == "__main__":
+    main()

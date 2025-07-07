@@ -3,6 +3,8 @@ import socket
 import struct
 from arango import ArangoClient
 
+starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
+
 def readStreamsFromSock(sock, stdout=True, stderr=True):
     # stream identifiers: stdout: 1 , stderr: 2
     buffers = [None, b"", b""]
