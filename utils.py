@@ -1,6 +1,7 @@
 from __future__ import annotations
-from arango import ArangoClient
-from dataclasses import dataclass, asdict
+from arango.collection import StandardCollection
+from arango import ArangoClient, DocumentInsertError
+from dataclasses import dataclass, asdict, field
 from benchmark import Benchmarker
 import json
 
@@ -37,12 +38,16 @@ class BenchmarkResult:
     executed: bool = False
     runtimeAvg: float = -1.0
 
-    def toDBDoc(self) -> dict:
-        dump = asdict(self)
-        filename = dump.pop("filename")
-        dump["_key"] = filename
-        return dump
-
+    def insertInto(self, collection: StandardCollection):
+        try: 
+            collection.insert(asdict(self), silent=True)
+            return
+        except DocumentInsertError as e:
+            if "unique constraint violated" in str(e): 
+                collection.delete_match(filters=dict(filename=self.filename))
+            else: raise 
+        collection.insert(asdict(self), silent=True)
+    
     @staticmethod
     def create(
         filename: str,
@@ -69,3 +74,9 @@ class BenchmarkResult:
         except (json.JSONDecodeError, KeyError):
             pass
         return result
+
+
+@dataclass
+class TestInfo:
+    testFile: str
+    choices: list[int] = field(default_factory=list)

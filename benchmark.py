@@ -4,9 +4,12 @@ import socket
 import struct
 from dataclasses import dataclass, field
 
+
 class Benchmarker:
     codeTemplate = """\
 #include "nanobench.h"
+#include <iostream>
+#include <chrono>
 {includes}
 
 {additionalDefs}
@@ -30,8 +33,9 @@ int main() {{
 """
 
     def renderTemplate(self, code: Code) -> str:
+
         return Benchmarker.codeTemplate.format(
-            includes=code.includes,
+            includes='\n'.join(code.includes),
             additionalDefs=code.additionalDefs,
             benchmarkBody=code.body,
             epochs=self.nanobenchOptions.epochs,
@@ -87,8 +91,8 @@ int main() {{
 
     def __init__(
         self,
-        benchmarkImg: str = "localhost/benchmark-examples",
-        nanobenchOptions: NanobenchOptions | None = None,
+        benchmarkImg: str = "localhost/benchmark",
+        nanobenchOptions: NanobenchOptions = NanobenchOptions(),
     ):
         self.client = docker.from_env()
         self.benchmarkImg = benchmarkImg

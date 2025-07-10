@@ -64,5 +64,5 @@ def extract(code: str) -> Benchmarker.Code:
     return Benchmarker.Code(
         includes=includes,
         additionalDefs=additionalDefs,
-        mainBody=mainBody,
+        body=mainBody,
     )
