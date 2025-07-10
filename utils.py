@@ -1,83 +1,71 @@
-import docker
-import socket
-import struct
+from __future__ import annotations
 from arango import ArangoClient
+from dataclasses import dataclass, asdict
+from benchmark import Benchmarker
+import json
 
 starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
-def readStreamsFromSock(sock, stdout=True, stderr=True):
-    # stream identifiers: stdout: 1 , stderr: 2
-    buffers = [None, b"", b""]
-    
-    streams = 0b00
-    streams |= stdout
-    streams |= stderr << 1
-    
-    while True:
-        header = sock.recv(8)
-        if len(header) < 8: break
-        (streamID, *_) = struct.unpack(">B", header[0:1])
-        (payloadLen, *_) = struct.unpack(">I", header[4:8])
-        if ( 
-            payloadLen > 0 and
-            len(payload := sock.recv(payloadLen)) == payloadLen
-        ): 
-            if streamID & streams: buffers[streamID] += payload
-        else: break
-    return dict(
-        stdout = buffers[1].decode(errors="ignore"),
-        stderr = buffers[2].decode(errors="ignore")
-    )
 
-class Benchmarker:
-    def __init__(self):
-        self.client = docker.from_env()
-
-    def runCode(self, code, stdout=True, stderr=True):
-        compileCommand = (
-            "g++ "
-            "-w -O3 --std=c++17 "
-            "nanobench.o "
-            "-x c++ - "
-            "-o a.out"
-        )
-
-        shellCommand = (
-            "sh -c \""
-            f"timeout 60 {compileCommand}; "
-            "exitCode=$?; "
-            "if [ $exitCode -ne 0 ]; then "
-                "echo Compilation failed 1>&2; exit 1; "
-            "fi; "
-            "timeout 600 ./a.out; "
-            "exitCode=$?; "
-            "if [ $exitCode -ne 0 ]; then "
-                "echo Execution failed 1>&2; exit 1; "
-            "fi"
-            "\""
-        )
-        container = self.client.containers.run(
-            "localhost/benchmark-examples", 
-            shellCommand,
-            working_dir="/usr/src",
-            remove=True, detach=True, stdin_open=True,
-        )
-        socketIO = container.attach_socket(params=dict(stdin=1, stdout=1, stderr=1, stream=1))
-        sock = socketIO._sock
-        sock.sendall(code.encode())
-        sock.shutdown(socket.SHUT_WR)
-        return readStreamsFromSock(sock, stdout=stdout, stderr=stderr)
-    
 class DB:
-    db = ArangoClient("http://localhost:8529").db()
-    examples = db.collection("code-optimization")
+    examples = "code-optimization-examples"
+    benchmarks = "benchmarks"
 
     @staticmethod
-    def getExamplesSorted():
-        return DB.db.aql.execute(
-        """
-        for example in `code-optimization` 
-            sort to_number(example._key) asc
-            return example
-        """
+    def get():
+        return ArangoClient("http://localhost:8529").db()
+
+    @staticmethod
+    def getCollection(coll):
+        return DB.get().collection(coll)
+
+@dataclass
+class Example:
+    _key: str
+    title: str
+    description: str
+    codeSlow: str
+    codeFast: str
+
+@dataclass
+class BenchmarkResult:
+    code: str
+    benchmarkCode: str
+    output: str
+    filename: str = ""
+    compiled: bool = False
+    executed: bool = False
+    runtimeAvg: float = -1.0
+
+    def toDBDoc(self) -> dict:
+        dump = asdict(self)
+        filename = dump.pop("filename")
+        dump["_key"] = filename
+        return dump
+
+    @staticmethod
+    def create(
+        filename: str,
+        code: str,
+        benchmarkCode: str,
+        output: Benchmarker.Output,
+    ) -> BenchmarkResult:
+
+        result = BenchmarkResult(
+            filename=filename,
+            code=code,
+            benchmarkCode=benchmarkCode,
+            output=output.stderr,
         )
+
+        if "Compilation failed" in output.stderr:
+            return result
+        result.compiled = True
+        if "Execution failed" in output.stderr:
+            return result
+        result.executed = True
+        try:
+            result.runtimeAvg = json.loads(output.stderr)["runtimeAvg"]
+        except (json.JSONDecodeError, KeyError):
+            pass
+        return result
