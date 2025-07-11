@@ -1,9 +1,11 @@
 from __future__ import annotations
 import json
 from dataclasses import dataclass, asdict, field
+from typing import Iterator
 from arango.collection import StandardCollection
 from arango import ArangoClient, DocumentInsertError
 from benchmark import Benchmarker
+
 
 starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
@@ -20,6 +22,7 @@ class DB:
     def getCollection(coll):
         return DB.get().collection(coll)
 
+
 @dataclass
 class Example:
     _key: str
@@ -27,6 +30,20 @@ class Example:
     description: str
     codeSlow: str
     codeFast: str
+
+
+def getExamplesSorted() -> Iterator[Example]:
+    query = (
+        f"for example in `{DB.examples}` "
+        "sort to_number(example._key) asc "
+        'return unset(example, "_id", "_rev")'
+    )
+
+    return map(
+        lambda doc: Example(**doc),
+        DB.get().aql.execute(query),
+    )
+
 
 @dataclass
 class BenchmarkResult:
@@ -39,15 +56,16 @@ class BenchmarkResult:
     runtimeAvg: float = -1.0
 
     def insertInto(self, collection: StandardCollection):
-        try: 
+        try:
             collection.insert(asdict(self), silent=True)
             return
         except DocumentInsertError as e:
-            if "unique constraint violated" in str(e): 
+            if "unique constraint violated" in str(e):
                 collection.delete_match(filters=dict(filename=self.filename))
-            else: raise 
+            else:
+                raise
         collection.insert(asdict(self), silent=True)
-    
+
     @staticmethod
     def create(
         filename: str,
@@ -63,10 +81,10 @@ class BenchmarkResult:
             output=output.stderr,
         )
 
-        if "Compilation failed" in output.stderr:
+        if Benchmarker.compFailMsg in output.stderr:
             return result
         result.compiled = True
-        if "Execution failed" in output.stderr:
+        if Benchmarker.execFailMsg in output.stderr:
             return result
         result.executed = True
         try:
@@ -74,7 +92,6 @@ class BenchmarkResult:
         except (json.JSONDecodeError, KeyError):
             pass
         return result
-
 
 @dataclass
 class TestInfo:

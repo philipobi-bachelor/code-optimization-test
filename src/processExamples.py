@@ -4,21 +4,8 @@ from dataclasses import asdict
 import random
 import json
 from benchmark import Benchmarker
-from utils import DB, starmap, Example, BenchmarkResult, TestInfo
+from utils import DB, starmap, Example, BenchmarkResult, TestInfo, getExamplesSorted
 import codeProcessing
-
-def getExamplesSorted() -> Iterator[Example]:
-    query = (
-        f"for example in `{DB.examples}` "
-        "sort to_number(example._key) asc "
-        'return unset(example, "_id", "_rev")'
-    )
-
-    return map(
-        lambda doc: Example(**doc),
-        DB.get().aql.execute(query),
-    )
-
 
 #### Extraction
 exampleRegex = re.compile(
@@ -28,6 +15,7 @@ exampleRegex = re.compile(
     r"Description: (?P<description>[^\n]*)\s*",
     flags=re.DOTALL,
 )
+
 
 def extractExamples(path: str) -> Iterator[Example]:
     with open(path, "r") as f:
@@ -50,8 +38,6 @@ def insertExamples(examples: Iterator[Example]):
         documents=list((asdict(example) for example in examples)),
         on_duplicate="replace",
     )
-
-
 
 
 #### Benchmarking
@@ -95,6 +81,7 @@ def benchmarkExamples():
 
     print("\nDone")
 
+
 #### Testing
 namespaceTemplate = """\
 namespace {namespaceName} {{
@@ -120,77 +107,88 @@ int main () {{
 }}
 """
 
-def renderTest(testTasks: list[Benchmarker.Code]):
-    includes = set((
-        include
-        for code in testTasks
-            for include in code.includes
-    ))
 
-    def renderCode(exampleNumber: int, code : Benchmarker.Code):
+def renderTest(testTasks: list[Benchmarker.Code]):
+    includes = set((include for code in testTasks for include in code.includes))
+
+    def renderCode(exampleNumber: int, code: Benchmarker.Code):
         namespace = None
         if code.additionalDefs:
             namespace = namespaceTemplate.format(
-                namespaceName=f"task{exampleNumber}",
-                namespaceBody=code.additionalDefs
+                namespaceName=f"task{exampleNumber}", namespaceBody=code.additionalDefs
             )
-        
+
         codeStr = codeTemplate.format(
-            exampleNumber = exampleNumber,
-            usingStatement = (
-                f"using namespace task{exampleNumber};" 
-                if namespace is not None else ""
+            exampleNumber=exampleNumber,
+            usingStatement=(
+                f"using namespace task{exampleNumber};" if namespace is not None else ""
             ),
-            codeBody = code.body
+            codeBody=code.body,
         )
 
         return (namespace, codeStr)
-    
-    (namespaces, codeBlocks) = zip(
-        *starmap(
-            renderCode, 
-            enumerate(testTasks, start=1)
-        )
-    )
+
+    (namespaces, codeBlocks) = zip(*starmap(renderCode, enumerate(testTasks, start=1)))
 
     return testTeamplate.format(
-        includes = "\n".join(includes),
-        additionalDefs = "\n".join(filter(
-            lambda namespace: namespace is not None,
-            namespaces
-        )),
-        mainBody = "\n\n".join(codeBlocks)
+        includes="\n".join(includes),
+        additionalDefs="\n".join(
+            filter(lambda namespace: namespace is not None, namespaces)
+        ),
+        mainBody="\n\n".join(codeBlocks),
     )
+
 
 def makeTests():
     random.seed(123)
-    
-    testTasks1 : list[Benchmarker.Code] = []
+
+    testTasks1: list[Benchmarker.Code] = []
     testInfo1 = TestInfo(testFile="main1.cpp")
-    
-    testTasks2 : list[Benchmarker.Code] = []
+
+    testTasks2: list[Benchmarker.Code] = []
     testInfo2 = TestInfo(testFile="main2.cpp")
 
     choices = ["codeSlow", "codeFast"]
-    
+
     for i, example in enumerate(getExamplesSorted(), start=1):
         assert str(i) == example._key
         choice1 = random.binomialvariate(n=1, p=0.5)
         choice2 = int(not choice1)
-        
+
         testInfo1.choices.append(choice1)
         code = getattr(example, choices[choice1])
         testTasks1.append(codeProcessing.extract(codeProcessing.stripComments(code)))
-        
+
         testInfo2.choices.append(choice2)
         code = getattr(example, choices[choice2])
         testTasks2.append(codeProcessing.extract(codeProcessing.stripComments(code)))
 
-    with open("main1.cpp", "w") as f: f.write(renderTest(testTasks1))
-    with open("info1.json", "w") as f: json.dump(asdict(testInfo1), f)
-    
-    with open("main2.cpp", "w") as f: f.write(renderTest(testTasks2))
-    with open("info2.json", "w") as f: json.dump(asdict(testInfo2), f)
-    
+    with open("main1.cpp", "w") as f:
+        f.write(renderTest(testTasks1))
+    with open("info1.json", "w") as f:
+        json.dump(asdict(testInfo1), f)
+
+    with open("main2.cpp", "w") as f:
+        f.write(renderTest(testTasks2))
+    with open("info2.json", "w") as f:
+        json.dump(asdict(testInfo2), f)
+
+#### example output validation
+def validateOutputs():
+    benchmarker = Benchmarker()
+    for example in getExamplesSorted():
+        print(end='\r')
+        print(f"Validating example {example._key}", end='\r')
+        result = benchmarker.compareOutputs(example.codeSlow, example.codeFast)
+        if not result.match:
+            print(f"Outputs for example {example._key} do not match:")
+            print("#### codeSlow:")
+            print(result.outputA.stdout)
+            print(result.outputA.stderr)
+            print("#### codeFast:")
+            print(result.outputB.stdout)
+            print(result.outputB.stderr)
+    print("\nDone")
+
 if __name__ == "__main__":
-    print("foo")
+    validateOutputs()

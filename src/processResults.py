@@ -35,7 +35,9 @@ taskTemplate = """\
 
 {additionalDefs}
 
-{task}
+int main() {{
+    {taskCode}
+}}
 """
 
 namespaceRegex = re.compile(r"using namespace.*?\n")
@@ -68,7 +70,7 @@ def benchmarkTasks(benchmarker: Benchmarker, code: str, filenameStem: str):
             code=taskTemplate.format(
                 includes="\n".join(includes),
                 additionalDefs=code[namespaceBlock.start : namespaceBlock.end],
-                task=code[taskBlock.start : taskBlock.end],
+                taskCode=code[taskBlock.start : taskBlock.end],
             ),
             benchmarkCode=benchmarkCode,
             output=output,

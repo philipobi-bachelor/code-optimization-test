@@ -6,6 +6,9 @@ from dataclasses import dataclass
 
 
 class Benchmarker:
+    compFailMsg = "Compilation failed"
+    execFailMsg = "Execution failed"
+
     codeTemplate = """\
 #include "nanobench.h"
 #include <iostream>
@@ -64,6 +67,12 @@ int main() {{
         stdout: str
         stderr: str
 
+    @dataclass
+    class OutputComparison:
+        outputA : Benchmarker.Output
+        outputB : Benchmarker.Output
+        match : bool = False
+
     @staticmethod
     def readStreamsFromSock(sock, stdout=True, stderr=True) -> Output:
         # stream identifiers: stdout: 1 , stderr: 2
@@ -98,6 +107,21 @@ int main() {{
         self.benchmarkImg = benchmarkImg
         self.nanobenchOptions = nanobenchOptions
 
+    def compareOutputs(self, codeA: str, codeB: str) -> OutputComparison:
+        outputA = self.run(codeA)
+        outputB = self.run(codeB)
+
+        result = Benchmarker.OutputComparison(outputA, outputB)
+
+        for output in (outputA, outputB):
+            if (
+                Benchmarker.compFailMsg in output.stderr or
+                Benchmarker.execFailMsg in output.stderr
+            ): return result
+
+        result.match = outputA.stdout == outputB.stdout
+        return result
+
     def run(
         self,
         code: str,
@@ -113,12 +137,12 @@ int main() {{
                 compileCommand,
                 "exitCode=$?",
                 "if [ $exitCode -ne 0 ]",
-                'then echo \\"Compilation failed\\" 1>&2; exit 1',
+                f'then echo \\"{Benchmarker.compFailMsg}\\" 1>&2; exit 1',
                 "fi",
                 "./a.out",
                 "exitCode=$?",
                 "if [ $exitCode -ne 0 ]",
-                'then echo \\"Execution failed\\" 1>&2; exit 1',
+                f'then echo \\"{Benchmarker.execFailMsg}\\" 1>&2; exit 1',
                 "fi",
             )
         )
