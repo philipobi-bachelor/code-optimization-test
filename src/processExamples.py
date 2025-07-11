@@ -1,11 +1,11 @@
 import re
-from utils import DB, starmap, Example, BenchmarkResult, TestInfo
-import codeProcessing
-from benchmark import Benchmarker
 from typing import Iterator
 from dataclasses import asdict
 import random
 import json
+from benchmark import Benchmarker
+from utils import DB, starmap, Example, BenchmarkResult, TestInfo
+import codeProcessing
 
 def getExamplesSorted() -> Iterator[Example]:
     query = (
@@ -193,4 +193,4 @@ def makeTests():
     with open("info2.json", "w") as f: json.dump(asdict(testInfo2), f)
     
 if __name__ == "__main__":
-    makeTests()
+    print("foo")

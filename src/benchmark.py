@@ -2,7 +2,7 @@ from __future__ import annotations
 import docker
 import socket
 import struct
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class Benchmarker:

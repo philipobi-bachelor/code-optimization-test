@@ -1,6 +1,6 @@
-from pydantic import BaseModel
 import re
 from benchmark import Benchmarker
+from dataclasses import dataclass
 
 includeRegex = re.compile(r"#include[^\n]*")
 commentRegex = re.compile(r"\/\/[^\n]*")
@@ -10,22 +10,23 @@ def stripComments(s: str) -> str:
     return re.sub(commentRegex, "", s)
 
 
-class FuncRange(BaseModel):
-    funcStart: int
-    funcEnd: int
+@dataclass
+class CodeBlock:
+    start: int
+    end: int
     bodyStart: int
     bodyEnd: int
 
 
-def findMainBody(code: str) -> FuncRange:
-    funcStart = code.find("int main")
-    if funcStart < 0:
-        return ""
+def extractBlock(code: str, blockPreamble: str) -> CodeBlock:
+    blockStart = code.find(blockPreamble)
+    if blockStart < 0:
+        return CodeBlock(0, 0, 0, 0)
     else:
-        subs = code[funcStart:]
+        subs = code[blockStart:]
 
-    bodyStart = funcStart
-    bodyEnd = funcStart
+    bodyStart = blockStart
+    bodyEnd = blockStart
     depth = 0
     for char in subs:
         if depth == 0:
@@ -40,9 +41,9 @@ def findMainBody(code: str) -> FuncRange:
 
         bodyEnd += 1
 
-    return FuncRange(
-        funcStart=funcStart,
-        funcEnd=bodyEnd + 1,
+    return CodeBlock(
+        start=blockStart,
+        end=bodyEnd + 1,
         bodyStart=bodyStart,
         bodyEnd=bodyEnd,
     )
@@ -51,13 +52,13 @@ def findMainBody(code: str) -> FuncRange:
 def extract(code: str) -> Benchmarker.Code:
     includes = [s.strip() for s in re.findall(includeRegex, code)]
 
-    mainInfo = findMainBody(code)
+    mainInfo = extractBlock(code, blockPreamble="int main")
 
     mainBody = code[mainInfo.bodyStart : mainInfo.bodyEnd]
     mainBody = mainBody.replace("return 0;", "")
     mainBody = mainBody.strip()
 
-    codeStripped = code[: mainInfo.funcStart] + code[mainInfo.funcEnd :]
+    codeStripped = code[: mainInfo.start] + code[mainInfo.end :]
     codeStripped = re.sub(includeRegex, "", codeStripped)
     additionalDefs = codeStripped.strip()
 

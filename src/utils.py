@@ -1,9 +1,9 @@
 from __future__ import annotations
+import json
+from dataclasses import dataclass, asdict, field
 from arango.collection import StandardCollection
 from arango import ArangoClient, DocumentInsertError
-from dataclasses import dataclass, asdict, field
 from benchmark import Benchmarker
-import json
 
 starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
