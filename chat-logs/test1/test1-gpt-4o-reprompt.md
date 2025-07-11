@@ -108,6 +108,7 @@ Edited `code-optimization-test/main1.cpp`
          sum += matrix[row][col];
        }
      }
+
 ```
 
 </details>
@@ -210,6 +211,7 @@ I have optimized several tasks in the file for better performance, focusing on m
          sum += matrix[row][col];
        }
      }
+
 ```
 
 </details>
@@ -1116,6 +1118,7 @@ I have optimized several tasks in the file for better performance, focusing on m
    }
  }
  
+
 ```
 
 </details>

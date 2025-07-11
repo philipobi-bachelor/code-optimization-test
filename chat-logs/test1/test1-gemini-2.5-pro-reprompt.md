@@ -496,6 +496,7 @@ Edited `code-optimization-test/main1.cpp`
      }
      std::cout << v.front() << std::endl;
    }
+
 ```
 
 </details>
@@ -622,6 +623,7 @@ Edited `code-optimization-test/main1.cpp`
      std::vector<std::vector<int>> matrix(size, std::vector<int>(size, 1));
      long sum = 0;
  
+
 ```
 
 </details>
@@ -1133,6 +1135,7 @@ These changes should provide a significant performance boost while preserving th
      }
      std::cout << v.front() << std::endl;
    }
+
 ```
 
 </details>
@@ -2136,6 +2139,7 @@ These changes should provide a significant performance boost while preserving th
    }
  }
  
+
 ```
 
 </details>

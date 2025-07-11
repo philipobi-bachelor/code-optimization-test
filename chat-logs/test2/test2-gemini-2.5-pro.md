@@ -253,6 +253,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Read " << count << " chars." << std::endl;
    }
  
+
 ```
 
 </details>
@@ -791,6 +792,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Fibonacci(" << n << ") = " << result << std::endl;
    }
  }
+
 ```
 
 </details>
@@ -889,6 +891,7 @@ Edited `code-optimization-test/main2.cpp`
  }
  } // namespace task50
  
+
 ```
 
 </details>
@@ -1650,6 +1653,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Fibonacci(" << n << ") = " << result << std::endl;
    }
  }
+
 ```
 
 </details>
@@ -2705,6 +2709,7 @@ Edited `code-optimization-test/main2.cpp`
    }
  }
  
+
 ```
 
 </details>

@@ -40,6 +40,7 @@ Edited `code-optimization-test/main1.cpp`
    for (int i = 0; i < 1000; i++) {
      result.push_back(i);
    }
+
 ```
 
 </details>
@@ -246,6 +247,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << v.front() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -315,6 +317,7 @@ Edited `code-optimization-test/main1.cpp`
  
      std::cout << "Count: " << count << std::endl;
    }
+
 ```
 
 </details>
@@ -613,6 +616,7 @@ All functional behavior and console outputs remain identical. Let me know if you
      std::cout << v.front() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1553,6 +1557,7 @@ All functional behavior and console outputs remain identical. Let me know if you
    }
  }
  
+
 ```
 
 </details>

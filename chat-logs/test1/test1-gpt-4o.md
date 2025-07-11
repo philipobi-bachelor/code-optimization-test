@@ -143,6 +143,7 @@ Edited `code-optimization-test/main1.cpp`
      }
      std::cout << v.front() << std::endl;
    }
+
 ```
 
 </details>
@@ -235,6 +236,7 @@ I have implemented the optimizations for tasks 4, 9, 16, 44, and 46. These chang
      }
      std::cout << v.front() << std::endl;
    }
+
 ```
 
 </details>
@@ -1134,6 +1136,7 @@ I have implemented the optimizations for tasks 4, 9, 16, 44, and 46. These chang
    }
  }
  
+
 ```
 
 </details>

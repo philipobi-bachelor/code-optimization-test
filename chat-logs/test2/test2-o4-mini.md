@@ -286,6 +286,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Fibonacci(" << n << ") = " << result << std::endl;
    }
  }
+
 ```
 
 </details>
@@ -360,6 +361,7 @@ Edited `code-optimization-test/main2.cpp`
      // Pre-format once outside loop to avoid repeated stream ops
      std::ostringstream oss;
      oss << std::fixed << std::setprecision(4) << value;
+
 ```
 
 </details>
@@ -491,6 +493,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Result: " << result << std::endl;
    }
  
+
 ```
 
 </details>
@@ -769,6 +772,7 @@ I’ve applied the optimizations across multiple tasks, ensuring functionality r
      std::cout << "Fibonacci(" << n << ") = " << result << std::endl;
    }
  }
+
 ```
 
 </details>
@@ -1664,6 +1668,7 @@ I’ve applied the optimizations across multiple tasks, ensuring functionality r
    }
  }
  
+
 ```
 
 </details>

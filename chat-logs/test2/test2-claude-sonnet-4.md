@@ -113,6 +113,7 @@ Edited `code-optimization-test/main2.cpp`
    for (int i = 0; i < 1000; i++) {
      data.push_back(i);
    }
+
 ```
 
 </details>
@@ -138,6 +139,7 @@ Edited `code-optimization-test/main2.cpp`
    if (p) {
      counter += *p % 2 ? 1 : -1;
    }
+
 ```
 
 </details>
@@ -166,6 +168,7 @@ Edited `code-optimization-test/main2.cpp`
      int counter = 0;
      for (int i = 0; i < 1000000; ++i) {
        *ptr = i;
+
 ```
 
 </details>
@@ -191,6 +194,7 @@ Edited `code-optimization-test/main2.cpp`
    return std::accumulate(values.begin(), values.end(), 0);
  }
  } // namespace task15
+
 ```
 
 </details>
@@ -231,6 +235,7 @@ Edited `code-optimization-test/main2.cpp`
  }
  } // namespace task50
  
+
 ```
 
 </details>
@@ -266,6 +271,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << result.substr(0, 20) << "..." << std::endl;
    }
  
+
 ```
 
 </details>
@@ -292,6 +298,7 @@ Edited `code-optimization-test/main2.cpp`
      for (int i = 0; i < 100000; i++) {
        numbers.push_back(i);
      }
+
 ```
 
 </details>
@@ -327,6 +334,7 @@ Edited `code-optimization-test/main2.cpp`
  
      int lookups = 0;
      for (int i = 0; i < 1000; i++) {
+
 ```
 
 </details>
@@ -358,6 +366,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "People: " << people.size() << std::endl;
+
 ```
 
 </details>
@@ -404,6 +413,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Total: " << total << std::endl;
+
 ```
 
 </details>
@@ -442,6 +452,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Remaining elements: " << numbers.size() << std::endl;
    }
+
 ```
 
 </details>
@@ -475,6 +486,7 @@ Edited `code-optimization-test/main2.cpp`
      }
      std::cout << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -510,6 +522,7 @@ Edited `code-optimization-test/main2.cpp`
            count++;
          }
        }
+
 ```
 
 </details>
@@ -540,6 +553,7 @@ Edited `code-optimization-test/main2.cpp`
          totalLength += name.length();
        }
      }
+
 ```
 
 </details>
@@ -571,6 +585,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Result length: " << result.length() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -600,6 +615,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << v.back() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -632,6 +648,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Sum: " << sum << std::endl;
+
 ```
 
 </details>
@@ -669,6 +686,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Result: " << result << std::endl;
+
 ```
 
 </details>
@@ -697,6 +715,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Result sample: " << results[1000] << std::endl;
+
 ```
 
 </details>
@@ -756,6 +775,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Found: " << std::boolalpha << found << std::endl;
    }
+
 ```
 
 </details>
@@ -791,6 +811,7 @@ Edited `code-optimization-test/main2.cpp`
        if (std::regex_match(email, emailRegex)) {
          validCount++;
        }
+
 ```
 
 </details>
@@ -828,6 +849,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Sum: " << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -867,6 +889,7 @@ Edited `code-optimization-test/main2.cpp`
  #include <iomanip>
  #include <iostream>
  #include <list>
+
 ```
 
 </details>
@@ -1010,6 +1033,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << "Read " << count << " chars." << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1038,6 +1062,7 @@ Edited `code-optimization-test/main2.cpp`
      }
      std::cout << result << std::endl;
    }
+
 ```
 
 </details>
@@ -1071,6 +1096,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Sum: " << sum << std::endl;
+
 ```
 
 </details>
@@ -1109,6 +1135,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Sum: " << sum << std::endl;
+
 ```
 
 </details>
@@ -1151,6 +1178,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "First person: " << people.front().name << std::endl;
+
 ```
 
 </details>
@@ -1212,6 +1240,7 @@ Edited `code-optimization-test/main2.cpp`
      }
  
      std::cout << "Tokens: " << tokens.size() << std::endl;
+
 ```
 
 </details>
@@ -1245,6 +1274,7 @@ Edited `code-optimization-test/main2.cpp`
    }
  
    // Task 37
+
 ```
 
 </details>
@@ -1299,6 +1329,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Total: " << total << std::endl;
    }
+
 ```
 
 </details>
@@ -1341,6 +1372,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Sum: " << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -1382,6 +1414,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Sum: " << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -1426,6 +1459,7 @@ Edited `code-optimization-test/main2.cpp`
      std::cout << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1460,6 +1494,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Sum: " << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -1506,6 +1541,7 @@ Edited `code-optimization-test/main2.cpp`
  #include <random>
  #include <regex>
  #include <sstream>
+
 ```
 
 </details>
@@ -1554,6 +1590,7 @@ Edited `code-optimization-test/main2.cpp`
  
      std::cout << "Count: " << count << std::endl;
    }
+
 ```
 
 </details>
@@ -2305,6 +2342,7 @@ The optimized code maintains **identical functionality and output** while provid
  
      std::cout << "Sum: " << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -3297,6 +3335,7 @@ The optimized code maintains **identical functionality and output** while provid
    }
  }
  
+
 ```
 
 </details>

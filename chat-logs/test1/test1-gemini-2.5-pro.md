@@ -123,6 +123,7 @@ Edited `code-optimization-test/main1.cpp`
          sum += matrix[row][col];
        }
      }
+
 ```
 
 </details>
@@ -180,6 +181,7 @@ Edited `code-optimization-test/main1.cpp`
      }
    }
  
+
 ```
 
 </details>
@@ -313,6 +315,7 @@ I have applied these optimizations to your `code-optimization-test/main1.cpp` fi
          sum += matrix[row][col];
        }
      }
+
 ```
 
 </details>
@@ -1214,6 +1217,7 @@ I have applied these optimizations to your `code-optimization-test/main1.cpp` fi
    }
  }
  
+
 ```
 
 </details>

@@ -60,6 +60,7 @@ Edited `code-optimization-test/main1.cpp`
    for (int i = 0; i < 1000; i++) {
      result.push_back(i);
    }
+
 ```
 
 </details>
@@ -89,6 +90,7 @@ Edited `code-optimization-test/main1.cpp`
  }
  } // namespace task6
  
+
 ```
 
 </details>
@@ -120,6 +122,7 @@ Edited `code-optimization-test/main1.cpp`
      }
      std::cout << counter << std::endl;
    }
+
 ```
 
 </details>
@@ -153,6 +156,7 @@ Edited `code-optimization-test/main1.cpp`
  }
  } // namespace task9
  
+
 ```
 
 </details>
@@ -184,6 +188,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Size: " << numbers.size() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -220,6 +225,7 @@ Edited `code-optimization-test/main1.cpp`
          lookups++;
        }
      }
+
 ```
 
 </details>
@@ -245,6 +251,7 @@ Edited `code-optimization-test/main1.cpp`
  #include <vector>
  
  namespace task4 {
+
 ```
 
 </details>
@@ -275,6 +282,7 @@ Edited `code-optimization-test/main1.cpp`
      }
  
      std::cout << "People: " << people.size() << std::endl;
+
 ```
 
 </details>
@@ -325,6 +333,7 @@ Edited `code-optimization-test/main1.cpp`
      }
  
      std::cout << "Total: " << total << std::endl;
+
 ```
 
 </details>
@@ -354,6 +363,7 @@ Edited `code-optimization-test/main1.cpp`
  
      bubbleSort(numbers);
  
+
 ```
 
 </details>
@@ -384,6 +394,7 @@ Edited `code-optimization-test/main1.cpp`
  
      numbers.erase(std::remove_if(numbers.begin(), numbers.end(),
                                   [](int n) { return n % 2 == 0; }),
+
 ```
 
 </details>
@@ -414,6 +425,7 @@ Edited `code-optimization-test/main1.cpp`
  
      std::srand(static_cast<unsigned int>(std::time(nullptr)));
      int sum = 0;
+
 ```
 
 </details>
@@ -449,6 +461,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -489,6 +502,7 @@ Edited `code-optimization-test/main1.cpp`
      }
  
      std::cout << "Count: " << count << std::endl;
+
 ```
 
 </details>
@@ -533,6 +547,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Total: " << total << std::endl;
    }
  
+
 ```
 
 </details>
@@ -572,6 +587,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Total length: " << totalLength << std::endl;
    }
  
+
 ```
 
 </details>
@@ -599,6 +615,7 @@ Edited `code-optimization-test/main1.cpp`
        file << "Log entry " << i << "\n";
      }
    }
+
 ```
 
 </details>
@@ -629,6 +646,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -660,6 +678,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << result << std::endl;
    }
  
+
 ```
 
 </details>
@@ -697,6 +716,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Sum: " << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -724,6 +744,7 @@ Edited `code-optimization-test/main1.cpp`
    return values;
  }
  } // namespace task32
+
 ```
 
 </details>
@@ -759,6 +780,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Sum: " << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -800,6 +822,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Result: " << result << std::endl;
    }
  
+
 ```
 
 </details>
@@ -858,6 +881,7 @@ Edited `code-optimization-test/main1.cpp`
  
      std::cout << "Count: " << count << std::endl;
    }
+
 ```
 
 </details>
@@ -903,6 +927,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Tokens: " << tokens.size() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -937,6 +962,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Sum: " << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -969,6 +995,7 @@ Edited `code-optimization-test/main1.cpp`
      }
      std::cout << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -994,6 +1021,7 @@ Edited `code-optimization-test/main1.cpp`
                                                 {GREEN, "Green"},
                                                 {BLUE, "Blue"},
                                                 {YELLOW, "Yellow"},
+
 ```
 
 </details>
@@ -1029,6 +1057,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << s << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1063,6 +1092,7 @@ Edited `code-optimization-test/main1.cpp`
      }
      std::cout << sum << std::endl;
    }
+
 ```
 
 </details>
@@ -1095,6 +1125,7 @@ Edited `code-optimization-test/main1.cpp`
          sum += matrix[row][col];
        }
      }
+
 ```
 
 </details>
@@ -1123,6 +1154,7 @@ Edited `code-optimization-test/main1.cpp`
      }
  
      std::cout << "Result sample: " << results[1000] << std::endl;
+
 ```
 
 </details>
@@ -1155,6 +1187,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << v.front() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1180,6 +1213,7 @@ Edited `code-optimization-test/main1.cpp`
  #include <fstream>
  #include <iomanip>
  #include <iostream>
+
 ```
 
 </details>
@@ -1244,6 +1278,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << "Sum: " << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1269,6 +1304,7 @@ Edited `code-optimization-test/main1.cpp`
  #include <cmath>
  #include <cstdlib>
  #include <ctime>
+
 ```
 
 </details>
@@ -1296,6 +1332,7 @@ Edited `code-optimization-test/main1.cpp`
  };
  } // namespace task26
  
+
 ```
 
 </details>
@@ -1338,6 +1375,7 @@ Edited `code-optimization-test/main1.cpp`
    return fib[n];
  }
  } // namespace task50
+
 ```
 
 </details>
@@ -1374,6 +1412,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << result.substr(0, 20) << "..." << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1399,6 +1438,7 @@ Edited `code-optimization-test/main1.cpp`
      for (int i = 0; i < 10000; i++) {
        oss << i << " ";
      }
+
 ```
 
 </details>
@@ -1676,6 +1716,7 @@ Edited `code-optimization-test/main1.cpp`
      std::cout << v.back() << std::endl;
    }
  
+
 ```
 
 </details>
@@ -1741,6 +1782,7 @@ Edited `code-optimization-test/main1.cpp`
    }
  
    // Task 37
+
 ```
 
 </details>
@@ -2516,6 +2558,7 @@ All optimizations maintain the exact same output and behavior as the original co
      std::cout << "Sum: " << sum << std::endl;
    }
  
+
 ```
 
 </details>
@@ -3554,6 +3597,7 @@ All optimizations maintain the exact same output and behavior as the original co
    }
  }
  
+
 ```
 
 </details>
