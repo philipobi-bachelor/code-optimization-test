@@ -1,1 +1,254 @@
-{"tasks": [{"taskNum": 1, "modified": "y", "improved": "~"}, {"taskNum": 2, "modified": "n", "improved": "n"}, {"taskNum": 3, "modified": "n", "improved": "n"}, {"taskNum": 4, "modified": "n", "improved": "n"}, {"taskNum": 5, "modified": "y", "improved": "y"}, {"taskNum": 6, "modified": "n", "improved": "n"}, {"taskNum": 7, "modified": "n", "improved": "n"}, {"taskNum": 8, "modified": "n", "improved": "n"}, {"taskNum": 9, "modified": "y", "improved": "n"}, {"taskNum": 10, "modified": "n", "improved": "n"}, {"taskNum": 11, "modified": "n", "improved": "n"}, {"taskNum": 12, "modified": "n", "improved": "n"}, {"taskNum": 13, "modified": "n", "improved": "n"}, {"taskNum": 14, "modified": "n", "improved": "n"}, {"taskNum": 15, "modified": "y", "improved": "~"}, {"taskNum": 16, "modified": "n", "improved": "n"}, {"taskNum": 17, "modified": "n", "improved": "n"}, {"taskNum": 18, "modified": "n", "improved": "n"}, {"taskNum": 19, "modified": "n", "improved": "n"}, {"taskNum": 20, "modified": "n", "improved": "n"}, {"taskNum": 21, "modified": "n", "improved": "n"}, {"taskNum": 22, "modified": "n", "improved": "n"}, {"taskNum": 23, "modified": "n", "improved": "n"}, {"taskNum": 24, "modified": "n", "improved": "n"}, {"taskNum": 25, "modified": "n", "improved": "n"}, {"taskNum": 26, "modified": "n", "improved": "n"}, {"taskNum": 27, "modified": "n", "improved": "n"}, {"taskNum": 28, "modified": "n", "improved": "n"}, {"taskNum": 29, "modified": "n", "improved": "n"}, {"taskNum": 30, "modified": "n", "improved": "n"}, {"taskNum": 31, "modified": "n", "improved": "n"}, {"taskNum": 32, "modified": "n", "improved": "n"}, {"taskNum": 33, "modified": "n", "improved": "n"}, {"taskNum": 34, "modified": "n", "improved": "n"}, {"taskNum": 35, "modified": "n", "improved": "n"}, {"taskNum": 36, "modified": "n", "improved": "n"}, {"taskNum": 37, "modified": "n", "improved": "n"}, {"taskNum": 38, "modified": "n", "improved": "n"}, {"taskNum": 39, "modified": "n", "improved": "n"}, {"taskNum": 40, "modified": "n", "improved": "n"}, {"taskNum": 41, "modified": "n", "improved": "n"}, {"taskNum": 42, "modified": "n", "improved": "n"}, {"taskNum": 43, "modified": "n", "improved": "n"}, {"taskNum": 44, "modified": "y", "improved": "y"}, {"taskNum": 45, "modified": "n", "improved": "n"}, {"taskNum": 46, "modified": "n", "improved": "n"}, {"taskNum": 47, "modified": "n", "improved": "n"}, {"taskNum": 48, "modified": "n", "improved": "n"}, {"taskNum": 49, "modified": "n", "improved": "n"}, {"taskNum": 50, "modified": "n", "improved": "n"}]}
+{
+    "tasks": [
+        {
+            "taskNum": 1,
+            "modified": "y",
+            "improved": "~"
+        },
+        {
+            "taskNum": 2,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 3,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 4,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 5,
+            "modified": "y",
+            "improved": "y"
+        },
+        {
+            "taskNum": 6,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 7,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 8,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 9,
+            "modified": "y",
+            "improved": "n"
+        },
+        {
+            "taskNum": 10,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 11,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 12,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 13,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 14,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 15,
+            "modified": "y",
+            "improved": "~"
+        },
+        {
+            "taskNum": 16,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 17,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 18,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 19,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 20,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 21,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 22,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 23,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 24,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 25,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 26,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 27,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 28,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 29,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 30,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 31,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 32,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 33,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 34,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 35,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 36,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 37,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 38,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 39,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 40,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 41,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 42,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 43,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 44,
+            "modified": "y",
+            "improved": "y"
+        },
+        {
+            "taskNum": 45,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 46,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 47,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 48,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 49,
+            "modified": "n",
+            "improved": "n"
+        },
+        {
+            "taskNum": 50,
+            "modified": "n",
+            "improved": "n"
+        }
+    ]
+}
