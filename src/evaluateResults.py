@@ -10,6 +10,8 @@ import numpy as np
 from dataclasses import dataclass
 from pint import UnitRegistry
 
+
+
 """
 Helper code to review the edits the agent made to the test file
 
@@ -137,6 +139,31 @@ Helper functions for producing the model evaluation tables
 
 N_EXAMPLES = 50
 
+# https://www.schemecolor.com/light-red-green-gradient.php
+colormapRedGreen = (
+    (-1.0, -0.8, "#B1D9A3"),
+    (-0.8, -0.6, "#CBE8BE"),
+    (-0.6, -0.4, "#E4F2D5"),
+    (-0.4, +0.4, None),
+    (+0.4, +0.6, "#FCF6E1"),
+    (+0.6, +0.8, "#FFCCCB"),
+    (+0.8, +1.0, "#FCBABA"),
+)
+
+def getColor(val: float, cmap: tuple[tuple[float, float, str | None]]) -> str | None:
+    result = None
+    for min, max, color in cmap:
+        if val < min:
+            break
+        elif val > max:
+            continue
+        else:
+            result = color      
+            break
+    return result
+
+bad = "#FFCCCB"
+good = "#CBE8BE"
 
 def getBenchRuntimesSorted(filenameLike: str, filenameReplace: str) -> list[float]:
     def fetch() -> Iterator[float]:
@@ -235,31 +262,45 @@ def fmtImprovement(improvement: Literal["y", "n", "~"]) -> str:
         case _:
             raise ValueError
 
+def fmtBool(val: bool) -> str:
+    if val:
+        return r"\fullcirc"
+    else:
+        return r"\emptycirc"
+
 
 def trfImprovement(
     taskIsFast: Literal[0, 1],
     improvement: Literal["y", "n", "~"],
 ) -> str:
     cellWrapper = "%(content)s"
+    color = ""
     if not taskIsFast:
+        cellWrapper = r"\cellcolor[HTML]{%(color)s}{%(content)s}"
         if improvement == "n":
-            cellWrapper = r"\cellcolor{red!25}{%(content)s}"
+            color = bad
         elif improvement == "y":
-            cellWrapper = r"\cellcolor{green!25}{%(content)s}"
-    return cellWrapper % dict(content=fmtImprovement(improvement))
+            color = good
+    return cellWrapper % dict(
+        content=fmtImprovement(improvement),
+        color=color.lstrip("#"),
+    )
 
 
 def fmtQty(val: float) -> str:
     return r"\num{" + f"{val:.2f}" + "}"
 
 
-def trfRuntimeProp(runtimeProp: float) -> str:
+def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
     cellWrapper = "%(content)s"
-    if runtimeProp > 0:
-        cellWrapper = r"\cellcolor{red!25}{%(content)s}"
-    else:
-        cellWrapper = r"\cellcolor{green!25}{%(content)s}"
-    return cellWrapper % dict(content=fmtQty(runtimeProp))
+    color = getColor(runtimePropMapped, colormapRedGreen)
+    if color is not None:
+        color = color.lstrip("#")
+        cellWrapper = r"\cellcolor[HTML]{%(color)s}{%(content)s}"
+    return cellWrapper % dict(
+        content=fmtQty(runtimeProp),
+        color=color
+    )
 
 
 def makeTestResultTable(
@@ -282,10 +323,6 @@ def makeTestResultTable(
     runtimesBaseline = runtimesFast = np.array(getExampleRuntimes("codeFast"))
     runtimesSlow = np.array(getExampleRuntimes("codeSlow"))
 
-    modelTestResults = {
-        model: getModelTestResults(testNum=testNum, model=model) for model in models
-    }
-
     def trfModelTestResults(
         model: str,
         testResults: ModelTestResults,
@@ -298,7 +335,8 @@ def makeTestResultTable(
         )
 
         runtimeProps = np.log10(testResults.runtimes / runtimesBaseline)
-        trfdRuntimes = list(map(trfRuntimeProp, runtimeProps))
+        runtimePropsMapped = np.atan(runtimeProps)
+        trfdRuntimes = list(starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped)))
 
         return {
             f"test{testNum}.{model}.improved": trfdImprovements,
@@ -319,6 +357,7 @@ def makeTestResultTable(
         "ex.codeSlow.log10(rt/bl)": list(
             map(fmtQty, np.log10(runtimesSlow / runtimesBaseline))
         ),
+        f"test{testNum}.task.isSlow" : list(map(lambda isFast: fmtBool(not isFast), testTaskIsFast)),
         **{
             k: v
             for d in (
