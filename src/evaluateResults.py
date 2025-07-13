@@ -11,7 +11,6 @@ from dataclasses import dataclass
 from pint import UnitRegistry
 
 
-
 """
 Helper code to review the edits the agent made to the test file
 
@@ -141,14 +140,15 @@ N_EXAMPLES = 50
 
 # https://www.schemecolor.com/light-red-green-gradient.php
 colormapRedGreen = (
-    (-1.0, -0.8, "#B1D9A3"),
-    (-0.8, -0.6, "#CBE8BE"),
-    (-0.6, -0.4, "#E4F2D5"),
-    (-0.4, +0.4, None),
-    (+0.4, +0.6, "#FCF6E1"),
-    (+0.6, +0.8, "#FFCCCB"),
-    (+0.8, +1.0, "#FCBABA"),
+    (-1.0, -0.7, "#B1D9A3"),
+    (-0.7, -0.4, "#CBE8BE"),
+    (-0.4, -0.1, "#E4F2D5"),
+    (-0.1, +0.1, None),
+    (+0.1, +0.4, "#FCF6E1"),
+    (+0.4, +0.7, "#FFCCCB"),
+    (+0.7, +1.0, "#FCBABA"),
 )
+
 
 def getColor(val: float, cmap: tuple[tuple[float, float, str | None]]) -> str | None:
     result = None
@@ -158,12 +158,14 @@ def getColor(val: float, cmap: tuple[tuple[float, float, str | None]]) -> str | 
         elif val > max:
             continue
         else:
-            result = color      
+            result = color
             break
     return result
 
+
 bad = "#FFCCCB"
 good = "#CBE8BE"
+
 
 def getBenchRuntimesSorted(filenameLike: str, filenameReplace: str) -> list[float]:
     def fetch() -> Iterator[float]:
@@ -262,6 +264,7 @@ def fmtImprovement(improvement: Literal["y", "n", "~"]) -> str:
         case _:
             raise ValueError
 
+
 def fmtBool(val: bool) -> str:
     if val:
         return r"\fullcirc"
@@ -288,7 +291,8 @@ def trfImprovement(
 
 
 def fmtQty(val: float) -> str:
-    return r"\num{" + f"{val:.2f}" + "}"
+    return r"\num{" + f"{round(val, 1):.1f}" + "}"
+    return f"${val:.1f}$"
 
 
 def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
@@ -297,10 +301,7 @@ def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
     if color is not None:
         color = color.lstrip("#")
         cellWrapper = r"\cellcolor[HTML]{%(color)s}{%(content)s}"
-    return cellWrapper % dict(
-        content=fmtQty(runtimeProp),
-        color=color
-    )
+    return cellWrapper % dict(content=fmtQty(runtimeProp), color=color)
 
 
 def makeTestResultTable(
@@ -335,8 +336,10 @@ def makeTestResultTable(
         )
 
         runtimeProps = np.log10(testResults.runtimes / runtimesBaseline)
-        runtimePropsMapped = np.atan(runtimeProps)
-        trfdRuntimes = list(starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped)))
+        runtimePropsMapped = np.atan(runtimeProps) / (np.pi / 2)
+        trfdRuntimes = list(
+            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped))
+        )
 
         return {
             f"test{testNum}.{model}.improved": trfdImprovements,
@@ -346,7 +349,7 @@ def makeTestResultTable(
     ureg = UnitRegistry()
     trfdRuntimesFast = list(
         map(
-            lambda t: "{0:.1f~#Lx}".format(t * ureg.second),
+            lambda t: "{0:.0f~#Lx}".format(t * ureg.second),
             runtimesFast,
         )
     )
@@ -357,7 +360,9 @@ def makeTestResultTable(
         "ex.codeSlow.log10(rt/bl)": list(
             map(fmtQty, np.log10(runtimesSlow / runtimesBaseline))
         ),
-        f"test{testNum}.task.isSlow" : list(map(lambda isFast: fmtBool(not isFast), testTaskIsFast)),
+        f"test{testNum}.task.isSlow": list(
+            map(lambda isFast: fmtBool(not isFast), testTaskIsFast)
+        ),
         **{
             k: v
             for d in (
