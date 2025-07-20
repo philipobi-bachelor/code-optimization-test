@@ -4,12 +4,11 @@ from IPython.display import display, Markdown, clear_output
 from utils import getExamplesSorted, Example, DB, starmap
 from processResults import fullDiffRegex
 from pathlib import PosixPath as Path
-from typing import Literal, Iterator
+from typing import Literal, Iterator, Iterable
 import pandas as pd
 import numpy as np
 from dataclasses import dataclass
 from pint import UnitRegistry
-
 
 """
 Helper code to review the edits the agent made to the test file
@@ -140,31 +139,31 @@ N_EXAMPLES = 50
 
 # https://www.schemecolor.com/light-red-green-gradient.php
 colormapRedGreen = (
-    (-1.0, -0.7, "#B1D9A3"),
-    (-0.7, -0.4, "#CBE8BE"),
-    (-0.4, -0.1, "#E4F2D5"),
-    (-0.1, +0.1, None),
-    (+0.1, +0.4, "#FCF6E1"),
-    (+0.4, +0.7, "#FFCCCB"),
-    (+0.7, +1.0, "#FCBABA"),
+    ("cm1", -1.0, -0.7, "#B1D9A3"),
+    good := ("cm2", -0.7, -0.4, "#CBE8BE"),
+    ("cm3", -0.4, -0.1, "#E4F2D5"),
+    ("", -0.1, +0.1, None),
+    ("cm4", +0.1, +0.4, "#FCF6E1"),
+    bad := ("cm5", +0.4, +0.7, "#FFCCCB"),
+    ("cm6", +0.7, +1.0, "#FCBABA"),
 )
+(good, *_) = good
+(bad, *_) = bad
 
 
-def getColor(val: float, cmap: tuple[tuple[float, float, str | None]]) -> str | None:
+def getColorName(
+    val: float, cmap: tuple[tuple[str, float, float, str | None]]
+) -> str | None:
     result = None
-    for min, max, color in cmap:
+    for colorName, min, max, _ in cmap:
         if val < min:
             break
         elif val > max:
             continue
         else:
-            result = color
+            result = colorName or None
             break
     return result
-
-
-bad = "#FFCCCB"
-good = "#CBE8BE"
 
 
 def getBenchRuntimesSorted(filenameLike: str, filenameReplace: str) -> list[float]:
@@ -256,20 +255,20 @@ def getModelTestResults(
 def fmtImprovement(improvement: Literal["y", "n", "~"]) -> str:
     match improvement:
         case "y":
-            return r"\fullcirc"
+            return r"\fc"
         case "n":
-            return r"\emptycirc"
+            return r"\ec"
         case "~":
-            return r"\halfcirc"
+            return r"\hc"
         case _:
             raise ValueError
 
 
 def fmtBool(val: bool) -> str:
     if val:
-        return r"\fullcirc"
+        return r"\fc"
     else:
-        return r"\emptycirc"
+        return r"\ec"
 
 
 def trfImprovement(
@@ -277,37 +276,134 @@ def trfImprovement(
     improvement: Literal["y", "n", "~"],
 ) -> str:
     cellWrapper = "%(content)s"
-    color = ""
+    colorName = ""
     if not taskIsFast:
-        cellWrapper = r"\cellcolor[HTML]{%(color)s}{%(content)s}"
+        cellWrapper = r"\cc{%(colorName)s}{%(content)s}"
         if improvement == "n":
-            color = bad
+            colorName = bad
         elif improvement == "y":
-            color = good
+            colorName = good
     return cellWrapper % dict(
         content=fmtImprovement(improvement),
-        color=color.lstrip("#"),
+        colorName=colorName,
     )
 
 
-def fmtQty(val: float) -> str:
-    return r"\num{" + f"{round(val, 1):.1f}" + "}"
-    return f"${val:.1f}$"
+class Col:
+    borderLeft = 0b10
+    borderRight = 0b01
+
+    def __init__(
+        self,
+        name: str,
+        rows: Iterable[str],
+        colType: str,
+        borders: int | None = None,
+    ):
+        self.name = name
+        self.rows = iter(rows)
+        self.colType = colType
+        self.borders = borders if borders is not None else 0b00
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return next(self.rows)
+
+
+commands = r"""
+\let\cc\cellcolor
+\providecommand*\ec[1][1ex]{}
+\providecommand*\hc[1][1ex]{}
+\providecommand*\fc[1][1ex]{}
+
+\renewcommand*\ec[1][1ex]{\adjustbox{valign=c}{\tikz\draw (0,0) circle (#1);}} 
+\renewcommand*\hc[1][1ex]{%
+  \adjustbox{valign=c}{\begin{tikzpicture}
+  \draw[fill] (0,0)-- (90:#1) arc (90:270:#1) -- cycle ;
+  \draw (0,0) circle (#1);
+  \end{tikzpicture}}}
+\renewcommand*\fc[1][1ex]{\adjustbox{valign=c}{\tikz\fill (0,0) circle (#1);}}
+""".strip()
+
+
+class Table:
+    defs = [
+        r"\definecolor{%s}{HTML}{%s}" % (colorName, colorHex.lstrip("#"))
+        for colorName, _, _, colorHex in colormapRedGreen
+        if colorHex is not None
+    ] + [commands]
+
+    def __init__(
+        self,
+        *cols: Col,
+        rowLines: bool = False,
+        colLines: bool = False,
+    ):
+        self.cols = cols
+        self.rowLines = rowLines
+        self.colLines = colLines
+
+    def lines(self) -> Iterator[str]:
+        preamble = ""
+        if not self.colLines:
+            for colLeft, colRight in zip(self.cols[:-1], self.cols[1:]):
+                sep = (
+                    " | "
+                    if (
+                        colLeft.borders & Col.borderRight
+                        | colRight.borders & Col.borderLeft
+                    )
+                    else " "
+                )
+                preamble += sep + colRight.colType
+            firstCol = self.cols[0]
+            lastCol = self.cols[-1]
+            preamble = (
+                ("| " if firstCol.borders & Col.borderLeft else "")
+                + firstCol.colType
+                + preamble
+                + ("|" if lastCol.borders & Col.borderRight else "")
+            )
+        else:
+            preamble = "| " + " | ".join((col.colType for col in self.cols)) + " |"
+
+        linesep = r" \\\hline" if self.rowLines else r" \\"
+        yield "{"
+        yield from Table.defs
+        yield r"\begin{tabular}{" + preamble + "}"
+        for rowCells in zip(*self.cols):
+            yield " & ".join(rowCells) + linesep
+        yield r"\end{tabular}"
+        yield "}"
+
+    def render(self) -> str:
+        return "\n".join(self.lines())
+
+
+class QtyFmt:
+    colType = "S[table-format=2.1]"
+    latexDef = r"\newcolumntype{Q}{" + colType + "}"
+    Table.defs.append(latexDef)
+
+    @staticmethod
+    def fmt(val: float) -> str:
+        return f"{round(val, 1):.1f}"
 
 
 def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
     cellWrapper = "%(content)s"
-    color = getColor(runtimePropMapped, colormapRedGreen)
-    if color is not None:
-        color = color.lstrip("#")
-        cellWrapper = r"\cellcolor[HTML]{%(color)s}{%(content)s}"
-    return cellWrapper % dict(content=fmtQty(runtimeProp), color=color)
+    colorName = getColorName(runtimePropMapped, colormapRedGreen)
+    if colorName is not None:
+        cellWrapper = r"\cc{%(colorName)s}{%(content)s}"
+    return cellWrapper % dict(content=QtyFmt.fmt(runtimeProp), colorName=colorName)
 
 
 def makeTestResultTable(
     testNum: int,
     root=Path.cwd(),
-) -> pd.DataFrame:
+) -> tuple[Table, pd.DataFrame]:
     models = [
         "claude-sonnet-4",
         "gemini-2.5-pro",
@@ -324,27 +420,32 @@ def makeTestResultTable(
     runtimesBaseline = runtimesFast = np.array(getExampleRuntimes("codeFast"))
     runtimesSlow = np.array(getExampleRuntimes("codeSlow"))
 
+    modelTestResults = {
+        model: getModelTestResults(testNum, model=model) for model in models
+    }
+
     def trfModelTestResults(
         model: str,
         testResults: ModelTestResults,
-    ):
-        trfdImprovements = list(
-            starmap(
-                trfImprovement,
-                zip(testTaskIsFast, testResults.improvedInfo),
-            )
-        )
+    ) -> Iterator[Col]:
 
         runtimeProps = np.log10(testResults.runtimes / runtimesBaseline)
         runtimePropsMapped = np.atan(runtimeProps) / (np.pi / 2)
-        trfdRuntimes = list(
-            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped))
+
+        yield Col(
+            f"test{testNum}.{model}.improved",
+            starmap(
+                trfImprovement,
+                zip(testTaskIsFast, testResults.improvedInfo),
+            ),
+            colType="c",
         )
 
-        return {
-            f"test{testNum}.{model}.improved": trfdImprovements,
-            f"test{testNum}.{model}.log10(rt/bl)": trfdRuntimes,
-        }
+        yield Col(
+            f"test{testNum}.{model}.log10(rt/bl)",
+            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped)),
+            colType="r",
+        )
 
     ureg = UnitRegistry()
     trfdRuntimesFast = list(
@@ -354,26 +455,52 @@ def makeTestResultTable(
         )
     )
 
-    colData = {
-        "ex.title": exTitles,
-        "ex.codeFast.rt (:= bl)": trfdRuntimesFast,
-        "ex.codeSlow.log10(rt/bl)": list(
-            map(fmtQty, np.log10(runtimesSlow / runtimesBaseline))
-        ),
-        f"test{testNum}.task.isSlow": list(
-            map(lambda isFast: fmtBool(not isFast), testTaskIsFast)
-        ),
-        **{
+    df = pd.DataFrame(
+        {
+            "ex.title": exTitles,
+            "ex.codeFast.rt": runtimesFast,
+            "ex.codeSlow.rt": runtimesSlow,
+            f"test{testNum}.isFast": testTaskIsFast,
+        }
+        | {
             k: v
             for d in (
-                trfModelTestResults(
-                    model,
-                    getModelTestResults(testNum, model),
-                )
-                for model in models
+                {
+                    f"test{testNum}.{model}.improved": testResults.improvedInfo,
+                    f"test{testNum}.{model}.rt": testResults.runtimes,
+                }
+                for model, testResults in modelTestResults.items()
             )
             for k, v in d.items()
         },
-    }
+        index=pd.RangeIndex(start=1, stop=N_EXAMPLES + 1),
+    )
 
-    return pd.DataFrame(colData)
+    tab = Table(
+        Col(
+            "Example / Task",
+            map(str, range(1, N_EXAMPLES + 1)),
+            colType="r",
+        ),
+        Col("ex.title", exTitles, colType="l"),
+        Col("ex.codeFast.rt (:= bl)", trfdRuntimesFast, colType="r"),
+        Col(
+            "ex.codeSlow.log10(rt/bl)",
+            map(QtyFmt.fmt, np.log10(runtimesSlow / runtimesBaseline)),
+            colType="r",
+        ),
+        Col(
+            f"test{testNum}.task.isSlow",
+            map(lambda isFast: fmtBool(not isFast), testTaskIsFast),
+            colType="c",
+        ),
+        *(
+            col
+            for model, testResults in modelTestResults.items()
+            for col in trfModelTestResults(model, testResults)
+        ),
+        rowLines=True,
+        colLines=True,
+    )
+
+    return (tab, df)
