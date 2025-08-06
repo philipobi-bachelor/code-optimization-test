@@ -38,7 +38,7 @@ int main() {{
     def renderTemplate(self, code: Code) -> str:
 
         return Benchmarker.codeTemplate.format(
-            includes='\n'.join(code.includes),
+            includes="\n".join(code.includes),
             additionalDefs=code.additionalDefs,
             benchmarkBody=code.body,
             epochs=self.nanobenchOptions.epochs,
@@ -69,9 +69,9 @@ int main() {{
 
     @dataclass
     class OutputComparison:
-        outputA : Benchmarker.Output
-        outputB : Benchmarker.Output
-        match : bool = False
+        outputA: Benchmarker.Output
+        outputB: Benchmarker.Output
+        match: bool = False
 
     @staticmethod
     def readStreamsFromSock(sock, stdout=True, stderr=True) -> Output:
@@ -115,9 +115,10 @@ int main() {{
 
         for output in (outputA, outputB):
             if (
-                Benchmarker.compFailMsg in output.stderr or
-                Benchmarker.execFailMsg in output.stderr
-            ): return result
+                Benchmarker.compFailMsg in output.stderr
+                or Benchmarker.execFailMsg in output.stderr
+            ):
+                return result
 
         result.match = outputA.stdout == outputB.stdout
         return result
@@ -127,14 +128,20 @@ int main() {{
         code: str,
         stdout: bool = True,
         stderr: bool = True,
+        optimized: bool = True,
     ) -> Output:
         compileCommand = (
-            "g++ " "-w -O3 --std=c++17 " "nanobench.o " "-x c++ - " "-o a.out"
+            "g++",
+            "-w --std=c++17",
+            "-O3" if optimized else "-O0",
+            "nanobench.o",
+            "-x c++ -",
+            "-o a.out",
         )
 
         shellCommand = "; ".join(
             (
-                compileCommand,
+                " ".join(compileCommand),
                 "exitCode=$?",
                 "if [ $exitCode -ne 0 ]",
                 f'then echo \\"{Benchmarker.compFailMsg}\\" 1>&2; exit 1',

@@ -45,10 +45,11 @@ def runBenchmark(
     benchmarker: Benchmarker,
     filename: str,
     code: str,
+    optimized: bool = True,
 ) -> BenchmarkResult:
     codeExtracted = codeProcessing.extract(code)
     benchmarkCode = benchmarker.renderTemplate(codeExtracted)
-    output = benchmarker.run(benchmarkCode, stdout=False)
+    output = benchmarker.run(benchmarkCode, stdout=False, optimized=optimized)
 
     return BenchmarkResult.create(
         filename=filename,
@@ -58,9 +59,11 @@ def runBenchmark(
     )
 
 
-def benchmarkExamples():
+def benchmarkExamples(optimized: bool):
     benchmarker = Benchmarker()
-    benchmarks = DB.getCollection(DB.benchmarks)
+    benchmarkCollection = DB.getCollection(
+        DB.benchmarksOptimized if optimized else DB.benchmarksUnoptimized
+    )
 
     for example in getExamplesSorted():
         print("\r", end="")
@@ -70,14 +73,14 @@ def benchmarkExamples():
             f"{DB.examples}/{example._key}.codeSlow",
             example.codeSlow,
         )
-        benchResultSlow.insertInto(benchmarks)
+        benchResultSlow.insertInto(benchmarkCollection)
 
         benchResultFast = runBenchmark(
             benchmarker,
             f"{DB.examples}/{example._key}.codeFast",
             example.codeFast,
         )
-        benchResultFast.insertInto(benchmarks)
+        benchResultFast.insertInto(benchmarkCollection)
 
     print("\nDone")
 
@@ -173,12 +176,13 @@ def makeTests():
     with open("info2.json", "w") as f:
         json.dump(asdict(testInfo2), f)
 
+
 #### example output validation
 def validateOutputs():
     benchmarker = Benchmarker()
     for example in getExamplesSorted():
-        print(end='\r')
-        print(f"Validating example {example._key}", end='\r')
+        print(end="\r")
+        print(f"Validating example {example._key}", end="\r")
         result = benchmarker.compareOutputs(example.codeSlow, example.codeFast)
         if not result.match:
             print(f"Outputs for example {example._key} do not match:")
@@ -190,5 +194,6 @@ def validateOutputs():
             print(result.outputB.stderr)
     print("\nDone")
 
+
 if __name__ == "__main__":
-    validateOutputs()
+    benchmarkExamples(optimized=False)

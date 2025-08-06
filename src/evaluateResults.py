@@ -140,19 +140,20 @@ N_EXAMPLES = 50
 # https://www.schemecolor.com/light-red-green-gradient.php
 colormapRedGreen = (
     ("cm1", -1.0, -0.7, "#B1D9A3"),
-    good := ("cm2", -0.7, -0.4, "#CBE8BE"),
-    ("cm3", -0.4, -0.1, "#E4F2D5"),
-    ("", -0.1, +0.1, None),
+    ("cm2", -0.7, -0.4, "#CBE8BE"),
+    good := ("cm3", -0.4, +0.1, "#E4F2D5"),
     ("cm4", +0.1, +0.4, "#FCF6E1"),
     bad := ("cm5", +0.4, +0.7, "#FFCCCB"),
     ("cm6", +0.7, +1.0, "#FCBABA"),
 )
+
 (good, *_) = good
 (bad, *_) = bad
 
 
 def getColorName(
-    val: float, cmap: tuple[tuple[str, float, float, str | None]]
+    val: float,
+    cmap: tuple[tuple[str, float, float, str]],
 ) -> str | None:
     result = None
     for colorName, min, max, _ in cmap:
@@ -161,15 +162,22 @@ def getColorName(
         elif val > max:
             continue
         else:
-            result = colorName or None
+            result = colorName
             break
     return result
 
 
-def getBenchRuntimesSorted(filenameLike: str, filenameReplace: str) -> list[float]:
+def getBenchRuntimesSorted(
+    optimized: bool,
+    filenameLike: str,
+    filenameReplace: str,
+) -> list[float]:
     def fetch() -> Iterator[float]:
+        benchmarkColl = (
+            DB.benchmarksOptimized if optimized else DB.benchmarksUnoptimized
+        )
         query = (
-            f"for bench in {DB.benchmarks}",
+            f"for bench in `{benchmarkColl}`",
             f'  filter bench.filename like "{filenameLike}"',
             f'  let exampleNum = to_number(regex_replace(bench.filename, "{filenameReplace}", ""))',
             "  sort exampleNum asc",
@@ -186,44 +194,55 @@ def getBenchRuntimesSorted(filenameLike: str, filenameReplace: str) -> list[floa
             assert exampleNum == benchDoc["exampleNum"]
             yield benchDoc["runtimeAvg"]
 
-    runtimes = list(fetch())
-    assert len(runtimes) == N_EXAMPLES
-    return runtimes
+    runtimeData = list(fetch())
+    assert len(runtimeData) == N_EXAMPLES
+    return runtimeData
 
 
-def getExampleRuntimes(version: Literal["codeSlow", "codeFast"]) -> list[float]:
+def getExampleRuntimes(
+    version: Literal["codeSlow", "codeFast"],
+    optimized: bool,
+) -> list[float]:
     """
     return runtimes in seconds for examples of given version
     returned runtimes are sorted by example number
     """
     return getBenchRuntimesSorted(
+        optimized=optimized,
         filenameLike=f"%.{version}",
         filenameReplace="[^0-9]*",
     )
 
 
-def getTaskRuntimes(testNum: Literal[1, 2], model: str) -> list[float]:
+def getTaskRuntimes(
+    testNum: Literal[1, 2],
+    model: str,
+    optimized: bool,
+) -> list[float]:
     """
     return runtimes in seconds for tasks in given model test
     returned runtimes are sorted by task number
     """
     return getBenchRuntimesSorted(
+        optimized=optimized,
         filenameLike=f"test{testNum}.{model}.task%",
         filenameReplace=".*task",
     )
 
 
 @dataclass
-class ModelTestResults:
+class ModelTestResult:
     improvedInfo: list[Literal["y", "n", "~"]]
     runtimes: np.ndarray
 
 
-def getModelTestResults(
+def getModelTestResult(
     testNum: Literal[1, 2],
     model: str,
-) -> ModelTestResults:
-    with open(f"../evaluation/test{testNum}/{model}.json", "r") as f:
+    optimized: bool,
+    root: Path,
+) -> ModelTestResult:
+    with Path.open(root / "evaluation" / f"test{testNum}/{model}.json", "r") as f:
         evalData = json.load(f)
 
     def unpack(taskNum: int, taskInfo: dict) -> Literal["y", "n", "~"]:
@@ -243,10 +262,11 @@ def getModelTestResults(
         getTaskRuntimes(
             testNum=testNum,
             model=model,
+            optimized=optimized,
         )
     )
 
-    return ModelTestResults(
+    return ModelTestResult(
         improvedInfo=improvedInfo,
         runtimes=runtimes,
     )
@@ -313,7 +333,9 @@ class Col:
 
 
 commands = r"""
+
 \let\cc\cellcolor
+
 \providecommand*\ec[1][1ex]{}
 \providecommand*\hc[1][1ex]{}
 \providecommand*\fc[1][1ex]{}
@@ -325,14 +347,14 @@ commands = r"""
   \draw (0,0) circle (#1);
   \end{tikzpicture}}}
 \renewcommand*\fc[1][1ex]{\adjustbox{valign=c}{\tikz\fill (0,0) circle (#1);}}
-""".strip()
+
+"""
 
 
 class Table:
     defs = [
         r"\definecolor{%s}{HTML}{%s}" % (colorName, colorHex.lstrip("#"))
         for colorName, _, _, colorHex in colormapRedGreen
-        if colorHex is not None
     ] + [commands]
 
     def __init__(
@@ -370,30 +392,33 @@ class Table:
             preamble = "| " + " | ".join((col.colType for col in self.cols)) + " |"
 
         linesep = r" \\\hline" if self.rowLines else r" \\"
-        yield "{"
+        
         yield from Table.defs
         yield r"\begin{tabular}{" + preamble + "}"
+        yield " & ".join((col.name for col in self.cols)) + linesep
         for rowCells in zip(*self.cols):
             yield " & ".join(rowCells) + linesep
         yield r"\end{tabular}"
-        yield "}"
 
     def render(self) -> str:
         return "\n".join(self.lines())
 
 
 class QtyFmt:
-    colType = "S[table-format=2.1]"
-    latexDef = r"\newcolumntype{Q}{" + colType + "}"
-    Table.defs.append(latexDef)
-
     @staticmethod
     def fmt(val: float) -> str:
-        return f"{round(val, 1):.1f}"
+        return "{0:.1f}".format(x if (x := round(val, 1)) != 0 else 0.0)
 
 
-def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
+def trfRuntimeProp(
+    runtimeProp: float,
+    runtimePropMapped: float,
+    taskIsFast: Literal[0, 1],
+) -> str:
     cellWrapper = "%(content)s"
+    if taskIsFast and (-0.1 < runtimeProp and runtimeProp < 0.1):
+        return QtyFmt.fmt(runtimeProp)
+
     colorName = getColorName(runtimePropMapped, colormapRedGreen)
     if colorName is not None:
         cellWrapper = r"\cc{%(colorName)s}{%(content)s}"
@@ -402,7 +427,8 @@ def trfRuntimeProp(runtimeProp: float, runtimePropMapped: float) -> str:
 
 def makeTestResultTable(
     testNum: int,
-    root=Path.cwd(),
+    optimized: bool,
+    root: Path = Path.cwd(),
 ) -> tuple[Table, pd.DataFrame]:
     models = [
         "claude-sonnet-4",
@@ -415,35 +441,43 @@ def makeTestResultTable(
         exTitles = tuple(json.load(f))
     with Path.open(root / f"info{testNum}.json", "r") as f:
         testInfo = json.load(f)
-        testTaskIsFast = tuple(testInfo["choices"])
+        testTaskIsFastInfo = tuple(testInfo["choices"])
 
-    runtimesBaseline = runtimesFast = np.array(getExampleRuntimes("codeFast"))
-    runtimesSlow = np.array(getExampleRuntimes("codeSlow"))
+    runtimesBaseline = runtimesFast = np.array(
+        getExampleRuntimes("codeFast", optimized=optimized)
+    )
+    runtimesSlow = np.array(getExampleRuntimes("codeSlow", optimized=optimized))
 
     modelTestResults = {
-        model: getModelTestResults(testNum, model=model) for model in models
+        model: getModelTestResult(
+            testNum,
+            model=model,
+            optimized=optimized,
+            root=root,
+        )
+        for model in models
     }
 
-    def trfModelTestResults(
+    def trfModelTestResult(
         model: str,
-        testResults: ModelTestResults,
+        testResult: ModelTestResult,
     ) -> Iterator[Col]:
 
-        runtimeProps = np.log10(testResults.runtimes / runtimesBaseline)
+        runtimeProps = np.log10(testResult.runtimes / runtimesBaseline)
         runtimePropsMapped = np.atan(runtimeProps) / (np.pi / 2)
 
         yield Col(
             f"test{testNum}.{model}.improved",
             starmap(
                 trfImprovement,
-                zip(testTaskIsFast, testResults.improvedInfo),
+                zip(testTaskIsFastInfo, testResult.improvedInfo),
             ),
             colType="c",
         )
 
         yield Col(
             f"test{testNum}.{model}.log10(rt/bl)",
-            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped)),
+            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped, testTaskIsFastInfo)),
             colType="r",
         )
 
@@ -460,7 +494,7 @@ def makeTestResultTable(
             "ex.title": exTitles,
             "ex.codeFast.rt": runtimesFast,
             "ex.codeSlow.rt": runtimesSlow,
-            f"test{testNum}.isFast": testTaskIsFast,
+            f"test{testNum}.isFast": testTaskIsFastInfo,
         }
         | {
             k: v
@@ -491,13 +525,13 @@ def makeTestResultTable(
         ),
         Col(
             f"test{testNum}.task.isSlow",
-            map(lambda isFast: fmtBool(not isFast), testTaskIsFast),
+            map(lambda isFast: fmtBool(not isFast), testTaskIsFastInfo),
             colType="c",
         ),
         *(
             col
-            for model, testResults in modelTestResults.items()
-            for col in trfModelTestResults(model, testResults)
+            for model, testResult in modelTestResults.items()
+            for col in trfModelTestResult(model, testResult)
         ),
         rowLines=True,
         colLines=True,

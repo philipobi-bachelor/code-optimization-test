@@ -42,7 +42,13 @@ int main() {{
 
 namespaceRegex = re.compile(r"using namespace.*?\n")
 
-def benchmarkTasks(benchmarker: Benchmarker, code: str, filenameStem: str):
+
+def benchmarkTasks(
+    benchmarker: Benchmarker,
+    code: str,
+    filenameStem: str,
+    optimized: bool,
+):
     includes = [s.strip() for s in re.findall(includeRegex, code)]
 
     for taskNum in range(1, 51):
@@ -53,7 +59,7 @@ def benchmarkTasks(benchmarker: Benchmarker, code: str, filenameStem: str):
         taskBlock = extractBlock(code, blockPreamble=f"// Task {taskNum}\n")
 
         body = code[taskBlock.bodyStart : taskBlock.bodyEnd]
-        body = re.sub(namespaceRegex, '', body)
+        body = re.sub(namespaceRegex, "", body)
 
         benchmarkCode = benchmarker.renderTemplate(
             Benchmarker.Code(
@@ -63,7 +69,7 @@ def benchmarkTasks(benchmarker: Benchmarker, code: str, filenameStem: str):
             )
         )
 
-        output = benchmarker.run(benchmarkCode, stdout=False)
+        output = benchmarker.run(benchmarkCode, stdout=False, optimized=optimized)
 
         yield BenchmarkResult.create(
             filename=f"{filenameStem}.task{taskNum}",
@@ -79,9 +85,11 @@ def benchmarkTasks(benchmarker: Benchmarker, code: str, filenameStem: str):
     print("\nDone")
 
 
-def benchmarkAgentEdits():
+def benchmarkAgentEdits(optimized: bool):
     benchmarker = Benchmarker()
-    benchmarks = DB.getCollection(DB.benchmarks)
+    benchmarkColl = DB.getCollection(
+        DB.benchmarksOptimized if optimized else DB.benchmarksUnoptimized
+    )
 
     logsDir = Path("chat-logs")
     for i in (1, 2):
@@ -100,8 +108,10 @@ def benchmarkAgentEdits():
                 benchmarker=benchmarker,
                 code=code,
                 filenameStem=filenameStem,
+                optimized=optimized
             ):
-                benchResult.insertInto(benchmarks)
+                benchResult.insertInto(benchmarkColl)
+
 
 if __name__ == "__main__":
-    benchmarkAgentEdits()
+    benchmarkAgentEdits(optimized=False)

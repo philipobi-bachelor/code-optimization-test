@@ -12,7 +12,8 @@ starmap = lambda func, iterable: map(lambda val: func(*val), iterable)
 
 class DB:
     examples = "code-optimization-examples"
-    benchmarks = "benchmarks"
+    benchmarksOptimized = "benchmarks-optimized"
+    benchmarksUnoptimized = "benchmarks-unoptimized"
 
     @staticmethod
     def get():
