@@ -200,8 +200,8 @@ def getBenchRuntimesSorted(
 
 
 def getExampleRuntimes(
-    version: Literal["codeSlow", "codeFast"],
     optimized: bool,
+    version: Literal["codeSlow", "codeFast"],
 ) -> list[float]:
     """
     return runtimes in seconds for examples of given version
@@ -215,9 +215,9 @@ def getExampleRuntimes(
 
 
 def getTaskRuntimes(
-    testNum: Literal[1, 2],
-    model: str,
     optimized: bool,
+    model: str,
+    testNum: Literal[1, 2],
 ) -> list[float]:
     """
     return runtimes in seconds for tasks in given model test
@@ -260,9 +260,9 @@ def getModelTestResult(
 
     runtimes = np.array(
         getTaskRuntimes(
-            testNum=testNum,
-            model=model,
             optimized=optimized,
+            model=model,
+            testNum=testNum,
         )
     )
 
@@ -292,8 +292,8 @@ def fmtBool(val: bool) -> str:
 
 
 def trfImprovement(
-    taskIsFast: Literal[0, 1],
     improvement: Literal["y", "n", "~"],
+    taskIsFast: Literal[0, 1],
 ) -> str:
     cellWrapper = "%(content)s"
     colorName = ""
@@ -392,7 +392,7 @@ class Table:
             preamble = "| " + " | ".join((col.colType for col in self.cols)) + " |"
 
         linesep = r" \\\hline" if self.rowLines else r" \\"
-        
+
         yield from Table.defs
         yield r"\begin{tabular}{" + preamble + "}"
         yield " & ".join((col.name for col in self.cols)) + linesep
@@ -430,23 +430,31 @@ def makeTestResultTable(
     optimized: bool,
     root: Path = Path.cwd(),
 ) -> tuple[Table, pd.DataFrame]:
-    models = [
+    models = (
         "claude-sonnet-4",
         "gemini-2.5-pro",
         "gpt-4o",
         "o4-mini",
-    ]
+    )
 
     with Path.open(root / "evaluation" / "titles.json", "r") as f:
-        exTitles = tuple(json.load(f))
+        exampleTitles = tuple(json.load(f))
     with Path.open(root / f"info{testNum}.json", "r") as f:
         testInfo = json.load(f)
         testTaskIsFastInfo = tuple(testInfo["choices"])
 
     runtimesBaseline = runtimesFast = np.array(
-        getExampleRuntimes("codeFast", optimized=optimized)
+        getExampleRuntimes(
+            optimized=optimized,
+            version="codeFast",
+        )
     )
-    runtimesSlow = np.array(getExampleRuntimes("codeSlow", optimized=optimized))
+    runtimesSlow = np.array(
+        getExampleRuntimes(
+            optimized=optimized,
+            version="codeSlow",
+        )
+    )
 
     modelTestResults = {
         model: getModelTestResult(
@@ -470,14 +478,17 @@ def makeTestResultTable(
             f"test{testNum}.{model}.improved",
             starmap(
                 trfImprovement,
-                zip(testTaskIsFastInfo, testResult.improvedInfo),
+                zip(testResult.improvedInfo, testTaskIsFastInfo),
             ),
             colType="c",
         )
 
         yield Col(
             f"test{testNum}.{model}.log10(rt/bl)",
-            starmap(trfRuntimeProp, zip(runtimeProps, runtimePropsMapped, testTaskIsFastInfo)),
+            starmap(
+                trfRuntimeProp,
+                zip(runtimeProps, runtimePropsMapped, testTaskIsFastInfo),
+            ),
             colType="r",
         )
 
@@ -491,7 +502,7 @@ def makeTestResultTable(
 
     df = pd.DataFrame(
         {
-            "ex.title": exTitles,
+            "ex.title": exampleTitles,
             "ex.codeFast.rt": runtimesFast,
             "ex.codeSlow.rt": runtimesSlow,
             f"test{testNum}.isFast": testTaskIsFastInfo,
@@ -507,7 +518,6 @@ def makeTestResultTable(
             )
             for k, v in d.items()
         },
-        index=pd.RangeIndex(start=1, stop=N_EXAMPLES + 1),
     )
 
     tab = Table(
@@ -516,7 +526,7 @@ def makeTestResultTable(
             map(str, range(1, N_EXAMPLES + 1)),
             colType="r",
         ),
-        Col("ex.title", exTitles, colType="l"),
+        Col("ex.title", exampleTitles, colType="l"),
         Col("ex.codeFast.rt (:= bl)", trfdRuntimesFast, colType="r"),
         Col(
             "ex.codeSlow.log10(rt/bl)",
@@ -534,7 +544,6 @@ def makeTestResultTable(
             for col in trfModelTestResult(model, testResult)
         ),
         rowLines=True,
-        colLines=True,
     )
 
     return (tab, df)

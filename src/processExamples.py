@@ -45,7 +45,7 @@ def runBenchmark(
     benchmarker: Benchmarker,
     filename: str,
     code: str,
-    optimized: bool = True,
+    optimized: bool,
 ) -> BenchmarkResult:
     codeExtracted = codeProcessing.extract(code)
     benchmarkCode = benchmarker.renderTemplate(codeExtracted)
@@ -70,15 +70,17 @@ def benchmarkExamples(optimized: bool):
         print(f"Benchmarking example {example._key}", end="")
         benchResultSlow = runBenchmark(
             benchmarker,
-            f"{DB.examples}/{example._key}.codeSlow",
-            example.codeSlow,
+            filename=f"{DB.examples}/{example._key}.codeSlow",
+            code=example.codeSlow,
+            optimized=optimized,
         )
         benchResultSlow.insertInto(benchmarkCollection)
 
         benchResultFast = runBenchmark(
             benchmarker,
-            f"{DB.examples}/{example._key}.codeFast",
-            example.codeFast,
+            filename=f"{DB.examples}/{example._key}.codeFast",
+            code=example.codeFast,
+            optimized=optimized,
         )
         benchResultFast.insertInto(benchmarkCollection)
 
@@ -196,4 +198,8 @@ def validateOutputs():
 
 
 if __name__ == "__main__":
+    print("Benchmarking Examples Optimized")
+    benchmarkExamples(optimized=True)
+    
+    print("Benchmarking Examples Unoptimized")
     benchmarkExamples(optimized=False)

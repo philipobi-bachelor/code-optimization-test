@@ -108,10 +108,14 @@ def benchmarkAgentEdits(optimized: bool):
                 benchmarker=benchmarker,
                 code=code,
                 filenameStem=filenameStem,
-                optimized=optimized
+                optimized=optimized,
             ):
                 benchResult.insertInto(benchmarkColl)
 
 
 if __name__ == "__main__":
+    print("Benchmarking Agent Edits Optimized")
+    benchmarkAgentEdits(optimized=True)
+
+    print("Benchmarking Agent Edits Unoptimized")
     benchmarkAgentEdits(optimized=False)
